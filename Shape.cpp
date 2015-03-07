@@ -1,9 +1,11 @@
 #include "stdafx.h"
 #include "Shape.h"
 
+#include "Jig/Util.h"
 #include "Jig/Vector.h"
 
 #include <algorithm>
+#include <map>
 
 Shape::Shape() 
 {
@@ -44,6 +46,9 @@ void Shape::MakeCW()
 
 void Shape::Convexify(std::vector<Shape>& newShapes)
 {
+	if (size() < 4)
+		return;
+
 	MakeCW();
 
 	for (int i = 0; i < (int)size(); ++i)
@@ -51,28 +56,53 @@ void Shape::Convexify(std::vector<Shape>& newShapes)
 		if (GetAngle(i) >= 0) // Convex.
 			continue;
 
-		Jig::Vec2 v0 = GetVec(i - 1, i).Normalised();
-		Jig::Vec2 v1 = GetVec(i + 1, i).Normalised();
-		Jig::Vec2 normal = (v0 + v1) / 2.0f;
+		Jig::Vec2 fromPrev = GetVec(i - 1, i).Normalised();
+		Jig::Vec2 fromNext = GetVec(i + 1, i).Normalised();
+		Jig::Vec2 normal = (fromPrev + fromNext) / 2.0f;
 		normal.Normalise();
+		
+		float angleToPrev = normal.GetAngle(-fromPrev);
+		float angleToNext = normal.GetAngle(-fromNext);
 
-		float minAngle = 10.0f; // > 2 * pi.
-		int nearestOpposite = -1;
+		assert(angleToPrev >= 0 && angleToNext <= 0);
+
+		std::map<float, int> map;
 		for (int j = i + 2; j < i + (int)size() - 1; ++j) // Non-adjacent to i.
 		{
 			Jig::Vec2 iToJ = GetVec(i, j).Normalised();
-			float angle = normal.GetAngle(iToJ);
-			if (std::fabs(angle) < minAngle)
+			const float angle = normal.GetAngle(iToJ);
+			if (angle < angleToPrev && angle > angleToNext)
+				map.insert(std::make_pair(angle, ClampVertIndex(j)));
+		}
+
+		float minAngle = 10.0f; // > 2 * pi.
+		int minAngleVert = -1;
+		
+		auto Try = [&](const std::pair<float, int>& pair) // Returns true to stop.
+		{
+			if (std::fabs(pair.first) < minAngle)
 			{
-				minAngle = std::fabs(angle);
-				nearestOpposite = ClampVertIndex(j);
+				minAngle = std::fabs(pair.first);
+				minAngleVert = pair.second;
+			}
+			return GetAngle(pair.second) < 0; // Stop if we've hit a concave vertex.
+		};
+		
+		for (auto& pair : map)
+		{
+			if (Try(pair))
+			{
+				for (auto& pair : Util::Reverse(map)) // Try the other way, might get closer to normal.
+					if (Try(pair))
+						break;
+				break;
 			}
 		}
-	
-		assert(nearestOpposite >= 0 && nearestOpposite != i);
 
-		int split0 = std::min(i, nearestOpposite);
-		int split1 = std::max(i, nearestOpposite);
+		assert(minAngleVert >= 0);
+
+		int split0 = std::min(i, minAngleVert);
+		int split1 = std::max(i, minAngleVert);
 
 		Shape newShape = *this;
 		newShape.InitColour();
@@ -86,6 +116,7 @@ void Shape::Convexify(std::vector<Shape>& newShapes)
 
 		Convexify(newShapes);
 		newShape.Convexify(newShapes);
+		return;
 	}
 }
 
