@@ -12,12 +12,13 @@ public:
 	~Shape();
 
 	CRect GetBBox() const;
-	void Convexify(std::vector<Shape>& newShapes);
+	void Convexify();
 
-	COLORREF GetColour() const { return m_colour; }
+	void Draw(CDC& dc) const;
 
 private:
-	void InitColour();
+	void Convexify(std::vector<Shape>& newShapes);
+	void Init();
 	void MakeCW();
 	float GetAngle(int vert) const;
 	Jig::Vec2 GetVecTo(int vert) const;
@@ -25,6 +26,8 @@ private:
 	int ClampVertIndex(int vert) const;
 
 	COLORREF m_colour;
+	std::vector<Shape> m_subshapes;
+
 };
 
 

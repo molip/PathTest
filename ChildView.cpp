@@ -18,7 +18,7 @@ namespace
 	int SquareSize = 32;
 }
 
-CChildView::CChildView() : m_adding(false), m_current{}
+CChildView::CChildView() : m_adding(false), m_current{}, m_dragging(false), m_dragShape(-1), m_dragPoint(-1)
 {
 }
 
@@ -57,44 +57,34 @@ void CChildView::OnPaint()
 	for (auto& shape : m_shapes)
 		if (!shape.empty())
 		{
-			bool complete = !m_adding || &shape != &m_shapes.back();
-			dc.SelectStockObject(complete ? NULL_PEN : BLACK_PEN);
-
-			if (complete)
-				dc.BeginPath();
-
-			auto i = shape.begin();
-			dc.MoveTo(LogToDev(*i));
-			while(++i != shape.end())
-			{
-				dc.LineTo(LogToDev(*i));
-			}
-
-			if (complete)
-			{
-				dc.EndPath();
-				dc.SelectStockObject(BLACK_PEN);
-
-				CBrush brush(shape.GetColour());
-				dc.SelectObject(&brush);
-				dc.StrokeAndFillPath();
-				dc.SelectStockObject(NULL_BRUSH);
-			}
+			if (!m_adding || &shape != &m_shapes.back())
+				shape.Draw(dc);
 			else
-				dc.LineTo(LogToDev(m_current));
-		}
-
-	dc.SelectStockObject(BLACK_BRUSH);
-	dc.SelectStockObject(BLACK_PEN);
-
-	for (auto& shape : m_shapes)
-		for (auto& p : shape)
 			{
-				CPoint dev = LogToDev(p);
-				CRect r(dev, dev);
-				r.InflateRect(2, 2, 3, 3);
-				dc.Rectangle(r);
+				dc.SelectStockObject(BLACK_PEN);
+				dc.SelectStockObject(BLACK_BRUSH);
+
+				auto i = shape.begin();
+				dc.MoveTo(*i);
+				while (++i != shape.end())
+					dc.LineTo(*i);
+
+				dc.LineTo(LogToDev(m_current));
+
+				for (auto& p : shape)
+				{
+					CPoint dev = LogToDev(p);
+					CRect r(dev, dev);
+					r.InflateRect(2, 2, 3, 3);
+					dc.Rectangle(r);
+				}
 			}
+		}
+}
+
+bool CChildView::HitPoint(CPoint p, CPoint q) const
+{
+	return ::abs(p.x - q.x) < 10 && ::abs(p.y - q.y) < 10;
 }
 
 CPoint CChildView::Snap(CPoint point) const
@@ -102,7 +92,7 @@ CPoint CChildView::Snap(CPoint point) const
 	if (!m_shapes.back().empty())
 	{
 		auto& start = m_shapes.back().front();
-		if (::abs(point.x - start.x) < 10 && ::abs(point.y - start.y) < 10)
+		if (HitPoint(point, start))
 			return start;
 	}
 	return point;
@@ -115,18 +105,21 @@ void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
 		if (m_current == m_shapes.back().front())
 		{
 			m_adding = false;
-			CRect r = m_shapes.back().GetBBox();
-			r.InflateRect(10, 10);
-			InvalidateRect(r);
-
-			std::vector<Shape> newShapes;
-			m_shapes.back().Convexify(newShapes);
-			m_shapes.insert(m_shapes.end(), newShapes.begin(), newShapes.end());
+			InvalidateShape(m_shapes.back());
+			m_shapes.back().Convexify();
 			return;
 		}
 	}
 	else
 	{
+		for (size_t i = 0; i < m_shapes.size(); ++i)
+			for (size_t j = 0; j < m_shapes[i].size(); ++j)
+				if (HitPoint(point, m_shapes[i][j]))
+				{
+					m_dragging = true, m_dragShape = (int)i, m_dragPoint = (int)j;
+					return;
+				}
+
 		m_shapes.emplace_back();
 		m_adding = true;
 	}
@@ -135,6 +128,7 @@ void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
 
 void CChildView::OnLButtonUp(UINT nFlags, CPoint point)
 {
+	m_dragging = false;
 }
 
 void CChildView::OnMouseMove(UINT nFlags, CPoint point)
@@ -144,6 +138,14 @@ void CChildView::OnMouseMove(UINT nFlags, CPoint point)
 		InvalidateCurrent();
 		m_current = Snap(point);
 		InvalidateCurrent();
+	}
+	else if (m_dragging)
+	{
+		auto& shape = m_shapes[m_dragShape];
+		InvalidateShape(shape);
+		shape[m_dragPoint] = point;
+		shape.Convexify();
+		InvalidateShape(shape);
 	}
 }
 
@@ -180,4 +182,11 @@ void CChildView::InvalidateCurrent()
 		r.InflateRect(10, 10);
 		InvalidateRect(r);
 	}
+}
+
+void CChildView::InvalidateShape(const Shape& shape)
+{
+	CRect r = shape.GetBBox();
+	r.InflateRect(10, 10);
+	InvalidateRect(r);
 }

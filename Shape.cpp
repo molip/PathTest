@@ -9,10 +9,10 @@
 
 Shape::Shape() 
 {
-	InitColour();
+	Init();
 }
 
-Shape::Shape(const Shape& rhs) : std::vector<CPoint>(rhs), m_colour(rhs.m_colour)
+Shape::Shape(const Shape& rhs) : std::vector<CPoint>(rhs), m_colour(rhs.m_colour), m_subshapes(rhs.m_subshapes)
 {
 }
 
@@ -20,9 +20,10 @@ Shape::~Shape()
 {
 }
 
-void Shape::InitColour()
+void Shape::Init()
 {
 	m_colour = RGB(::rand() % 255, ::rand() % 255, ::rand() % 255);
+	m_subshapes.clear();
 }
 
 CRect Shape::GetBBox() const
@@ -42,6 +43,51 @@ void Shape::MakeCW()
 
 	if (total < 0)
 		std::reverse(begin(), end());
+}
+
+void Shape::Convexify()
+{
+	m_subshapes.clear();
+	Shape sub = *this;
+	sub.Convexify(m_subshapes);
+	m_subshapes.push_back(sub);
+}
+
+void Shape::Draw(CDC& dc) const
+{
+	if (empty())
+		return;
+
+	if (!m_subshapes.empty())
+	{
+		for (auto& shape : m_subshapes)
+			shape.Draw(dc);
+		return;
+	}
+
+	dc.SelectStockObject(NULL_PEN);
+	dc.BeginPath();
+
+	auto i = begin();
+	dc.MoveTo(*i);
+	while (++i != end())
+		dc.LineTo(*i);
+
+	dc.EndPath();
+	dc.SelectStockObject(BLACK_PEN);
+
+	CBrush brush(m_colour);
+	dc.SelectObject(&brush);
+	dc.StrokeAndFillPath();
+
+	dc.SelectStockObject(BLACK_BRUSH);
+
+	for (auto& p : *this)
+	{
+		CRect r(p, p);
+		r.InflateRect(2, 2, 3, 3);
+		dc.Rectangle(r);
+	}
 }
 
 void Shape::Convexify(std::vector<Shape>& newShapes)
@@ -105,7 +151,8 @@ void Shape::Convexify(std::vector<Shape>& newShapes)
 		int split1 = std::max(i, minAngleVert);
 
 		Shape newShape = *this;
-		newShape.InitColour();
+		std::srand(m_colour);
+		newShape.Init();
 
 		erase(begin() + split0 + 1, begin() + split1);
 		
