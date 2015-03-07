@@ -58,7 +58,10 @@ void CChildView::OnPaint()
 		if (!shape.empty())
 		{
 			if (!m_adding || &shape != &m_shapes.back())
+			{
+				std::srand(0); // Reset colours.
 				shape.Draw(dc);
+			}
 			else
 			{
 				dc.SelectStockObject(BLACK_PEN);

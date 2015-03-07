@@ -25,7 +25,6 @@ private:
 	Jig::Vec2 GetVec(int from, int to) const;
 	int ClampVertIndex(int vert) const;
 
-	COLORREF m_colour;
 	std::vector<Shape> m_subshapes;
 
 };

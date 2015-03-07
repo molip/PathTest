@@ -12,7 +12,7 @@ Shape::Shape()
 	Init();
 }
 
-Shape::Shape(const Shape& rhs) : std::vector<CPoint>(rhs), m_colour(rhs.m_colour), m_subshapes(rhs.m_subshapes)
+Shape::Shape(const Shape& rhs) : std::vector<CPoint>(rhs), m_subshapes(rhs.m_subshapes)
 {
 }
 
@@ -22,7 +22,6 @@ Shape::~Shape()
 
 void Shape::Init()
 {
-	m_colour = RGB(::rand() % 255, ::rand() % 255, ::rand() % 255);
 	m_subshapes.clear();
 }
 
@@ -76,7 +75,7 @@ void Shape::Draw(CDC& dc) const
 	dc.EndPath();
 	dc.SelectStockObject(BLACK_PEN);
 
-	CBrush brush(m_colour);
+	CBrush brush(RGB(std::rand() % 255, std::rand() % 255, std::rand() % 255));
 	dc.SelectObject(&brush);
 	dc.StrokeAndFillPath();
 
@@ -151,7 +150,6 @@ void Shape::Convexify(std::vector<Shape>& newShapes)
 		int split1 = std::max(i, minAngleVert);
 
 		Shape newShape = *this;
-		std::srand(m_colour);
 		newShape.Init();
 
 		erase(begin() + split0 + 1, begin() + split1);
