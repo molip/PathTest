@@ -31,6 +31,7 @@ BEGIN_MESSAGE_MAP(CChildView, CWnd)
 	ON_WM_LBUTTONDOWN()
 	ON_WM_LBUTTONUP()
 	ON_WM_MOUSEMOVE()
+	ON_COMMAND(ID_CLEAR, OnClear)
 END_MESSAGE_MAP()
 
 BOOL CChildView::PreCreateWindow(CREATESTRUCT& cs) 
@@ -144,6 +145,12 @@ void CChildView::OnMouseMove(UINT nFlags, CPoint point)
 		m_current = Snap(point);
 		InvalidateCurrent();
 	}
+}
+
+void CChildView::OnClear()
+{
+	m_shapes.clear();
+	Invalidate();
 }
 
 CPoint CChildView::LogToDev(const CPoint& p) const
