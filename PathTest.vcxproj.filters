@@ -34,6 +34,7 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="Shape.h" />
+    <ClInclude Include="ShapeSplitter.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PathTest.cpp">
@@ -49,6 +50,7 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Shape.cpp" />
+    <ClCompile Include="ShapeSplitter.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="PathTest.rc">

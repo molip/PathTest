@@ -6,6 +6,8 @@
 
 class Shape : public std::vector<CPoint>
 {
+	friend class ShapeSplitter;
+
 public:
 	Shape();
 	Shape(const Shape& rhs);
@@ -20,7 +22,7 @@ private:
 	void Convexify(std::vector<Shape>& newShapes);
 	void Init();
 	void MakeCW();
-	float GetAngle(int vert) const;
+	double GetAngle(int vert) const;
 	Jig::Vec2 GetVecTo(int vert) const;
 	Jig::Vec2 GetVec(int from, int to) const;
 	int ClampVertIndex(int vert) const;
