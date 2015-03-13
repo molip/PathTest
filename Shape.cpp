@@ -15,7 +15,7 @@ Shape::Shape()
 	Init();
 }
 
-Shape::Shape(const Shape& rhs) : std::vector<CPoint>(rhs), m_subshapes(rhs.m_subshapes)
+Shape::Shape(const Shape& rhs) : std::vector<CPoint>(rhs), m_subshapes(rhs.m_subshapes), m_isSelfIntersecting(false)
 {
 }
 
@@ -47,14 +47,6 @@ void Shape::MakeCW()
 		std::reverse(begin(), end());
 }
 
-void Shape::Convexify()
-{
-	m_subshapes.clear();
-	Shape sub = *this;
-	sub.Convexify(m_subshapes);
-	m_subshapes.push_back(sub);
-}
-
 void Shape::Draw(CDC& dc) const
 {
 	if (empty())
@@ -79,7 +71,11 @@ void Shape::Draw(CDC& dc) const
 	dc.SelectStockObject(BLACK_PEN);
 
 	CBrush brush(RGB(std::rand() % 255, std::rand() % 255, std::rand() % 255));
-	dc.SelectObject(&brush);
+	
+	if (m_isSelfIntersecting)
+		dc.SelectStockObject(NULL_BRUSH);
+	else
+		dc.SelectObject(&brush);
 	dc.StrokeAndFillPath();
 
 	dc.SelectStockObject(BLACK_BRUSH);
@@ -181,4 +177,31 @@ double Shape::GetAngle(int vert) const
 	Jig::Vec2 v1 = GetVecTo(vert + 1).Normalised();
 
 	return v0.GetAngle(v1);
+}
+
+void Shape::Update()
+{
+	m_isSelfIntersecting = false;
+	m_subshapes.clear();
+
+	for (int i = 0; i < (int)size(); ++i)
+	{
+		auto edge0 = Jig::Line2::MakeFinite(GetVertex(i), GetVertex(i + 1));
+		for (int j = i + 2; j < (int)size() - (i == 0); ++j) // Don't intersect last edge with first.
+		{
+			auto edge1 = Jig::Line2::MakeFinite(GetVertex(j), GetVertex(j + 1));
+			if (m_isSelfIntersecting = edge0.Intersect(edge1))
+				break;
+		}
+		if (m_isSelfIntersecting)
+			break;
+	}
+
+	if (!m_isSelfIntersecting)
+	{
+		Shape sub = *this;
+		sub.Convexify(m_subshapes);
+		if (!m_subshapes.empty())
+			m_subshapes.push_back(sub);
+	}
 }

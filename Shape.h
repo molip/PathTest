@@ -14,12 +14,13 @@ public:
 	~Shape();
 
 	CRect GetBBox() const;
-	void Convexify();
 	int AddPoint(const CPoint& point, double tolerance);
 
 	void Draw(CDC& dc) const;
 
 	Jig::Vec2 GetVertex(int vert) const;
+
+	void Update();
 
 private:
 	void Convexify(std::vector<Shape>& newShapes);
@@ -31,6 +32,7 @@ private:
 	int ClampVertIndex(int vert) const;
 
 	std::vector<Shape> m_subshapes;
+	bool m_isSelfIntersecting;
 
 };
 

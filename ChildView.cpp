@@ -112,7 +112,7 @@ void CChildView::OnRButtonDown(UINT nFlags, CPoint point)
 			{
 				InvalidateShape(shape);
 				shape.erase(shape.begin() + j);
-				shape.Convexify();
+				shape.Update();
 				return;
 			}
 
@@ -123,7 +123,7 @@ void CChildView::OnRButtonDown(UINT nFlags, CPoint point)
 		if (vert >= 0)
 		{
 			InvalidateShape(shape);
-			shape.Convexify();
+			shape.Update();
 			m_dragging = true, m_dragShape = (int)i, m_dragPoint = vert;
 			break;
 		}
@@ -138,7 +138,7 @@ void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
 		{
 			m_adding = false;
 			InvalidateShape(m_shapes.back());
-			m_shapes.back().Convexify();
+			m_shapes.back().Update();
 			return;
 		}
 	}
@@ -181,7 +181,7 @@ void CChildView::OnMouseMove(UINT nFlags, CPoint point)
 		auto& shape = m_shapes[m_dragShape];
 		InvalidateShape(shape);
 		shape[m_dragPoint] = point;
-		shape.Convexify();
+		shape.Update();
 		InvalidateShape(shape);
 	}
 
