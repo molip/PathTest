@@ -3,6 +3,8 @@
 
 #include "MainFrm.h"
 
+#include <sstream>
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -80,6 +82,13 @@ BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 	cs.dwExStyle &= ~WS_EX_CLIENTEDGE;
 	cs.lpszClass = AfxRegisterWndClass(0);
 	return TRUE;
+}
+
+void CMainFrame::SetMousePos(CPoint p)
+{
+	std::wostringstream ss;
+	ss << p.x << L", " << p.y;
+	m_wndStatusBar.SetPaneText(0, ss.str().c_str());
 }
 
 // CMainFrame diagnostics

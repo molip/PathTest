@@ -5,6 +5,7 @@
 #include "stdafx.h"
 #include "PathTest.h"
 #include "ChildView.h"
+#include "MainFrm.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -29,7 +30,9 @@ CChildView::~CChildView()
 BEGIN_MESSAGE_MAP(CChildView, CWnd)
 	ON_WM_PAINT()
 	ON_WM_LBUTTONDOWN()
+	ON_WM_RBUTTONDOWN()
 	ON_WM_LBUTTONUP()
+	ON_WM_RBUTTONUP()
 	ON_WM_MOUSEMOVE()
 	ON_COMMAND(ID_CLEAR, OnClear)
 END_MESSAGE_MAP()
@@ -101,6 +104,32 @@ CPoint CChildView::Snap(CPoint point) const
 	return point;
 }
 
+void CChildView::OnRButtonDown(UINT nFlags, CPoint point)
+{
+	for (auto& shape : m_shapes)
+		for (size_t j = 0; j < shape.size(); ++j)
+			if (HitPoint(point, shape[j]))
+			{
+				InvalidateShape(shape);
+				shape.erase(shape.begin() + j);
+				shape.Convexify();
+				return;
+			}
+
+	for (size_t i = 0; i < m_shapes.size(); ++i)
+	{
+		auto& shape = m_shapes[i];
+		int vert = shape.AddPoint(point, 10);
+		if (vert >= 0)
+		{
+			InvalidateShape(shape);
+			shape.Convexify();
+			m_dragging = true, m_dragShape = (int)i, m_dragPoint = vert;
+			break;
+		}
+	}
+}
+
 void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
 {
 	if (m_adding)
@@ -134,6 +163,11 @@ void CChildView::OnLButtonUp(UINT nFlags, CPoint point)
 	m_dragging = false;
 }
 
+void CChildView::OnRButtonUp(UINT nFlags, CPoint point)
+{
+	m_dragging = false;
+}
+
 void CChildView::OnMouseMove(UINT nFlags, CPoint point)
 {
 	if (m_adding)
@@ -150,6 +184,8 @@ void CChildView::OnMouseMove(UINT nFlags, CPoint point)
 		shape.Convexify();
 		InvalidateShape(shape);
 	}
+
+	static_cast<CMainFrame*>(::AfxGetMainWnd())->SetMousePos(point);
 }
 
 void CChildView::OnClear()

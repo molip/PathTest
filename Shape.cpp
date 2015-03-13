@@ -3,6 +3,7 @@
 
 #include "ShapeSplitter.h"
 
+#include "Jig/Line2.h"
 #include "Jig/Util.h"
 #include "Jig/Vector.h"
 
@@ -105,7 +106,8 @@ void Shape::Convexify(std::vector<Shape>& newShapes)
 
 		const int connectVert = ShapeSplitter(*this).ChooseConnectVert(i);
 
-		assert(connectVert >= 0);
+		if (connectVert < 0)
+			return;
 
 		int split0 = std::min(i, connectVert);
 		int split1 = std::max(i, connectVert);
@@ -126,12 +128,38 @@ void Shape::Convexify(std::vector<Shape>& newShapes)
 	}
 }
 
+int Shape::AddPoint(const CPoint& point, double tolerance)
+{
+	int minEdge = -1;
+	double minDist = 1 << 16;
+
+	for (int i = 0; i < (int)size(); ++i)
+	{
+		auto edge = Jig::Line2::MakeFinite(GetVertex(i), GetVertex(i + 1));
+
+		double dist = edge.DistanceTo(Jig::Vec2(point.x, point.y));
+		if (tolerance > dist && minDist > dist)
+			minDist = dist, minEdge = i;
+	}
+
+	if (minEdge >= 0)
+		insert(begin() + minEdge + 1, point);
+	
+	return minEdge >= 0 ? minEdge + 1 : -1;
+}
+
 int Shape::ClampVertIndex(int vert) const
 {
 	return	
 		vert < 0 ? vert + (int)size() : 
 		vert >= (int)size() ? vert - (int)size() :
 		vert;
+}
+
+Jig::Vec2 Shape::GetVertex(int vert) const
+{
+	auto p = at(ClampVertIndex(vert));
+	return Jig::Vec2(p.x, p.y);
 }
 
 Jig::Vec2 Shape::GetVecTo(int vert) const

@@ -15,8 +15,11 @@ public:
 
 	CRect GetBBox() const;
 	void Convexify();
+	int AddPoint(const CPoint& point, double tolerance);
 
 	void Draw(CDC& dc) const;
+
+	Jig::Vec2 GetVertex(int vert) const;
 
 private:
 	void Convexify(std::vector<Shape>& newShapes);

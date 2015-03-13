@@ -18,6 +18,8 @@ public:
 
 // Operations
 public:
+	void SetMousePos(CPoint p);
+
 
 // Overrides
 public:
