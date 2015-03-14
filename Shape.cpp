@@ -133,8 +133,9 @@ int Shape::AddPoint(const CPoint& point, double tolerance)
 	{
 		auto edge = Jig::Line2::MakeFinite(GetVertex(i), GetVertex(i + 1));
 
-		double dist = edge.DistanceTo(Jig::Vec2(point.x, point.y));
-		if (tolerance > dist && minDist > dist)
+		bool intersects = false;
+		double dist = edge.PerpDistanceTo(Jig::Vec2(point.x, point.y), &intersects);
+		if (intersects && tolerance > dist && minDist > dist)
 			minDist = dist, minEdge = i;
 	}
 
