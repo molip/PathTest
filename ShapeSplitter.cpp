@@ -26,7 +26,7 @@ int ShapeSplitter::ChooseConnectVert(int i) const
 
 	Vec2 fromPrev = m_shape.GetVec(i - 1, i).Normalised();
 	Vec2 fromNext = m_shape.GetVec(i + 1, i).Normalised();
-	Vec2 normal = (fromPrev + fromNext) / 2.0f;
+	Vec2 normal = (fromPrev + fromNext) / 2.0;
 	normal.Normalise();
 
 	double angleToPrev = normal.GetAngle(-fromPrev);
