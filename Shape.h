@@ -1,10 +1,11 @@
 #pragma once
 
+#include "Jig/Rect.h"
 #include "Jig/Vector.h"
 
 #include <vector>
 
-class Shape : public std::vector<CPoint>
+class Shape : public std::vector<Jig::Vec2>
 {
 	friend class ShapeSplitter;
 
@@ -13,14 +14,15 @@ public:
 	Shape(const Shape& rhs);
 	~Shape();
 
-	CRect GetBBox() const;
-	int AddPoint(const CPoint& point, double tolerance);
+	Jig::Rect GetBBox() const;
+	int AddPoint(const Jig::Vec2& point, double tolerance);
 
-	void Draw(CDC& dc) const;
-
-	Jig::Vec2 GetVertex(int vert) const;
+	const Jig::Vec2& GetVertex(int vert) const;
 
 	void Update();
+
+	bool IsSelfIntersecting() const { return m_isSelfIntersecting; }
+	const std::vector<Shape>& GetSubshapes() const { return m_subshapes; }
 
 private:
 	void Convexify(std::vector<Shape>& newShapes);

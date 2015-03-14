@@ -13,12 +13,17 @@ protected:
 
 	CPoint Snap(CPoint point) const;
 
+	CRect Convert(const Jig::Rect& r) const;
+	CPoint Convert(const Jig::Vec2& p) const;
+	Jig::Vec2 Convert(const CPoint& p) const;
+
 	CPoint LogToDev(const CPoint& p) const;
 	CPoint DevToLog(const CPoint& p) const;
 	bool Colinear(const CPoint& p, const CPoint& q, const CPoint& r) const;
 	void InvalidateCurrent();
 	void InvalidateShape(const Shape& shape);
 	bool HitPoint(CPoint p, CPoint q) const;
+	void DrawShape(const Shape& shape, CDC& dc) const;
 
 	std::vector<Shape> m_shapes;
 	bool m_adding, m_dragging;

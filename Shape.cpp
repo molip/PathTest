@@ -10,12 +10,14 @@
 #include <algorithm>
 #include <map>
 
+using namespace Jig;
+
 Shape::Shape() 
 {
 	Init();
 }
 
-Shape::Shape(const Shape& rhs) : std::vector<CPoint>(rhs), m_subshapes(rhs.m_subshapes), m_isSelfIntersecting(false)
+Shape::Shape(const Shape& rhs) : std::vector<Vec2>(rhs), m_subshapes(rhs.m_subshapes), m_isSelfIntersecting(false)
 {
 }
 
@@ -28,11 +30,16 @@ void Shape::Init()
 	m_subshapes.clear();
 }
 
-CRect Shape::GetBBox() const
+Jig::Rect Shape::GetBBox() const
 {
-	CRect r = {};
-	for (CPoint p : *this)
-		r |= CRect(p, CSize(1, 1));
+	Rect r = {};
+	for (Vec2 p : *this)
+	{
+		r.m_p0.x = std::min(r.m_p0.x, p.x);
+		r.m_p1.x = std::max(r.m_p1.x, p.x);
+		r.m_p0.y = std::min(r.m_p0.y, p.y);
+		r.m_p1.y = std::max(r.m_p1.y, p.y);
+	}
 
 	return r;
 }
@@ -45,47 +52,6 @@ void Shape::MakeCW()
 
 	if (total < 0)
 		std::reverse(begin(), end());
-}
-
-void Shape::Draw(CDC& dc) const
-{
-	if (empty())
-		return;
-
-	if (!m_subshapes.empty())
-	{
-		for (auto& shape : m_subshapes)
-			shape.Draw(dc);
-		return;
-	}
-
-	dc.SelectStockObject(NULL_PEN);
-	dc.BeginPath();
-
-	auto i = begin();
-	dc.MoveTo(*i);
-	while (++i != end())
-		dc.LineTo(*i);
-
-	dc.EndPath();
-	dc.SelectStockObject(BLACK_PEN);
-
-	CBrush brush(RGB(std::rand() % 255, std::rand() % 255, std::rand() % 255));
-	
-	if (m_isSelfIntersecting)
-		dc.SelectStockObject(NULL_BRUSH);
-	else
-		dc.SelectObject(&brush);
-	dc.StrokeAndFillPath();
-
-	dc.SelectStockObject(BLACK_BRUSH);
-
-	for (auto& p : *this)
-	{
-		CRect r(p, p);
-		r.InflateRect(2, 2, 3, 3);
-		dc.Rectangle(r);
-	}
 }
 
 void Shape::Convexify(std::vector<Shape>& newShapes)
@@ -124,7 +90,7 @@ void Shape::Convexify(std::vector<Shape>& newShapes)
 	}
 }
 
-int Shape::AddPoint(const CPoint& point, double tolerance)
+int Shape::AddPoint(const Vec2& point, double tolerance)
 {
 	int minEdge = -1;
 	double minDist = 1 << 16;
@@ -153,10 +119,9 @@ int Shape::ClampVertIndex(int vert) const
 		vert;
 }
 
-Jig::Vec2 Shape::GetVertex(int vert) const
+const Jig::Vec2& Shape::GetVertex(int vert) const
 {
-	auto p = at(ClampVertIndex(vert));
-	return Jig::Vec2(p.x, p.y);
+	return at(ClampVertIndex(vert));
 }
 
 Jig::Vec2 Shape::GetVecTo(int vert) const
@@ -166,10 +131,10 @@ Jig::Vec2 Shape::GetVecTo(int vert) const
 
 Jig::Vec2 Shape::GetVec(int from, int to) const
 {
-	CPoint p = at(ClampVertIndex(from));
-	CPoint q = at(ClampVertIndex(to));
+	Vec2 p = at(ClampVertIndex(from));
+	Vec2 q = at(ClampVertIndex(to));
 
-	return Jig::Vec2(float(q.x - p.x), float(q.y - p.y));
+	return q - p;
 }
 
 double Shape::GetAngle(int vert) const
