@@ -211,7 +211,7 @@ void CChildView::InvalidateCurrent()
 	}
 }
 
-void CChildView::InvalidateShape(const Shape& shape)
+void CChildView::InvalidateShape(const Jig::Polygon& shape)
 {
 	CRect r = Convert(shape.GetBBox());
 	r.InflateRect(10, 10);
@@ -233,15 +233,15 @@ Jig::Vec2 CChildView::Convert(const CPoint& p) const
 	return Jig::Vec2(p.x, p.y);
 }
 
-void CChildView::DrawShape(const Shape& shape, CDC& dc) const
+void CChildView::DrawShape(const Jig::Polygon& shape, CDC& dc) const
 {
 	if (shape.empty())
 		return;
 
-	if (!shape.GetSubshapes().empty())
+	if (!shape.GetEdgeMesh().GetFaces().empty())
 	{
-		for (auto& shape : shape.GetSubshapes())
-			DrawShape(shape, dc);
+		for (auto& face : shape.GetEdgeMesh().GetFaces())
+			DrawShape(face->GetPolygon(), dc);
 		return;
 	}
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Shape.h"
+#include "Jig/Polygon.h"
 
 class CChildView : public CWnd
 {
@@ -21,11 +21,11 @@ protected:
 	CPoint DevToLog(const CPoint& p) const;
 	bool Colinear(const CPoint& p, const CPoint& q, const CPoint& r) const;
 	void InvalidateCurrent();
-	void InvalidateShape(const Shape& shape);
+	void InvalidateShape(const Jig::Polygon& shape);
 	bool HitPoint(CPoint p, CPoint q) const;
-	void DrawShape(const Shape& shape, CDC& dc) const;
+	void DrawShape(const Jig::Polygon& shape, CDC& dc) const;
 
-	std::vector<Shape> m_shapes;
+	std::vector<Jig::Polygon> m_shapes;
 	bool m_adding, m_dragging;
 	CPoint m_current;
 
