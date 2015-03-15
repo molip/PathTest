@@ -7,7 +7,7 @@
 #define new DEBUG_NEW
 #endif
 
-CChildView::CChildView() : m_adding(false), m_current{}, m_dragging(false), m_dragShape(-1), m_dragPoint(-1)
+CChildView::CChildView() : m_adding(false), m_current{}, m_dragging(false), m_dragShape(-1), m_dragPoint(-1), m_optimise(false)
 {
 }
 
@@ -23,6 +23,8 @@ BEGIN_MESSAGE_MAP(CChildView, CWnd)
 	ON_WM_RBUTTONUP()
 	ON_WM_MOUSEMOVE()
 	ON_COMMAND(ID_CLEAR, OnClear)
+	ON_COMMAND(ID_OPTIMISE, OnOptimise)
+	ON_UPDATE_COMMAND_UI(ID_OPTIMISE, OnUpdateOptimise)
 END_MESSAGE_MAP()
 
 BOOL CChildView::PreCreateWindow(CREATESTRUCT& cs) 
@@ -100,7 +102,7 @@ void CChildView::OnRButtonDown(UINT nFlags, CPoint point)
 			{
 				InvalidateShape(shape);
 				shape.erase(shape.begin() + j);
-				shape.Update();
+				UpdateShape(shape);
 				return;
 			}
 
@@ -111,7 +113,7 @@ void CChildView::OnRButtonDown(UINT nFlags, CPoint point)
 		if (vert >= 0)
 		{
 			InvalidateShape(shape);
-			shape.Update();
+			UpdateShape(shape);
 			m_dragging = true, m_dragShape = (int)i, m_dragPoint = vert;
 			break;
 		}
@@ -126,7 +128,7 @@ void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
 		{
 			m_adding = false;
 			InvalidateShape(m_shapes.back());
-			m_shapes.back().Update();
+			UpdateShape(m_shapes.back());
 			return;
 		}
 	}
@@ -169,7 +171,7 @@ void CChildView::OnMouseMove(UINT nFlags, CPoint point)
 		auto& shape = m_shapes[m_dragShape];
 		InvalidateShape(shape);
 		shape[m_dragPoint] = Convert(point);
-		shape.Update();
+		UpdateShape(shape);
 		InvalidateShape(shape);
 	}
 
@@ -180,6 +182,20 @@ void CChildView::OnClear()
 {
 	m_shapes.clear();
 	Invalidate();
+}
+
+void CChildView::OnOptimise()
+{
+	m_optimise = !m_optimise;
+	for (auto& shape : m_shapes)
+		UpdateShape(shape);
+
+	Invalidate();
+}
+
+void CChildView::OnUpdateOptimise(CCmdUI* p)
+{
+	p->SetCheck(m_optimise);
 }
 
 CPoint CChildView::LogToDev(const CPoint& p) const
@@ -272,4 +288,9 @@ void CChildView::DrawShape(const Jig::Polygon& shape, CDC& dc) const
 		r.InflateRect(2, 2, 3, 3);
 		dc.Rectangle(r);
 	}
+}
+
+void CChildView::UpdateShape(Jig::Polygon& shape)
+{
+	shape.Update(m_optimise);
 }

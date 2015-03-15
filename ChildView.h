@@ -24,10 +24,12 @@ protected:
 	void InvalidateShape(const Jig::Polygon& shape);
 	bool HitPoint(CPoint p, CPoint q) const;
 	void DrawShape(const Jig::Polygon& shape, CDC& dc) const;
+	void UpdateShape(Jig::Polygon& shape);
 
 	std::vector<Jig::Polygon> m_shapes;
 	bool m_adding, m_dragging;
 	CPoint m_current;
+	bool m_optimise;
 
 	int m_dragShape, m_dragPoint;
 
@@ -39,5 +41,7 @@ protected:
 	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg void OnClear();
+	afx_msg void OnOptimise();
+	afx_msg void OnUpdateOptimise(CCmdUI* p);
 };
 
