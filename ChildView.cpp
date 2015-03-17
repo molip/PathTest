@@ -122,6 +122,12 @@ void CChildView::OnRButtonDown(UINT nFlags, CPoint point)
 
 void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
 {
+	if (nFlags & MK_CONTROL)
+	{
+		point.x = point.x / 20 * 20;
+		point.y = point.y / 20 * 20;
+	}
+
 	if (m_adding)
 	{
 		if (m_current == Convert(m_shapes.back().front()))
@@ -160,6 +166,12 @@ void CChildView::OnRButtonUp(UINT nFlags, CPoint point)
 
 void CChildView::OnMouseMove(UINT nFlags, CPoint point)
 {
+	if (nFlags & MK_CONTROL)
+	{
+		point.x = point.x / 20 * 20;
+		point.y = point.y / 20 * 20;
+	}
+
 	if (m_adding)
 	{
 		InvalidateCurrent();
