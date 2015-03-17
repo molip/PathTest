@@ -18,7 +18,7 @@ public:
 
 // Operations
 public:
-	void SetMousePos(CPoint p);
+	void SetStatus(CPoint p, bool inPoly);
 
 
 // Overrides

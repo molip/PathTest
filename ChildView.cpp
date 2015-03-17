@@ -172,6 +172,8 @@ void CChildView::OnMouseMove(UINT nFlags, CPoint point)
 		point.y = point.y / 20 * 20;
 	}
 
+	bool inPoly = false;
+
 	if (m_adding)
 	{
 		InvalidateCurrent();
@@ -180,14 +182,19 @@ void CChildView::OnMouseMove(UINT nFlags, CPoint point)
 	}
 	else if (m_dragging)
 	{
+
 		auto& shape = m_shapes[m_dragShape];
 		InvalidateShape(shape);
 		shape[m_dragPoint] = Convert(point);
 		UpdateShape(shape);
 		InvalidateShape(shape);
 	}
+	else
+		for (auto& poly : m_shapes)
+			if (inPoly = poly.Contains(Convert(point)))
+				break;
 
-	static_cast<CMainFrame*>(::AfxGetMainWnd())->SetMousePos(point);
+	static_cast<CMainFrame*>(::AfxGetMainWnd())->SetStatus(point, inPoly);
 }
 
 void CChildView::OnClear()

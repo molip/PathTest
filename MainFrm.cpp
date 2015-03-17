@@ -84,10 +84,12 @@ BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 	return TRUE;
 }
 
-void CMainFrame::SetMousePos(CPoint p)
+void CMainFrame::SetStatus(CPoint p, bool inPoly)
 {
 	std::wostringstream ss;
 	ss << p.x << L", " << p.y;
+	if(inPoly)
+		ss << L" (in poly)";
 	m_wndStatusBar.SetPaneText(0, ss.str().c_str());
 }
 
