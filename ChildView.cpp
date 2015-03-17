@@ -25,6 +25,7 @@ BEGIN_MESSAGE_MAP(CChildView, CWnd)
 	ON_COMMAND(ID_CLEAR, OnClear)
 	ON_COMMAND(ID_OPTIMISE, OnOptimise)
 	ON_UPDATE_COMMAND_UI(ID_OPTIMISE, OnUpdateOptimise)
+	ON_WM_SIZE()
 END_MESSAGE_MAP()
 
 BOOL CChildView::PreCreateWindow(CREATESTRUCT& cs) 
@@ -47,35 +48,29 @@ void CChildView::OnPaint()
 	CRect r;
 	GetClientRect(r);
 
-	for (auto& shape : m_shapes)
-		if (!shape.empty())
+	for (auto& face : m_mesh.GetFaces())
+		DrawShape(face->GetPolygon(), dc);
+
+	if (m_adding)
+	{
+		dc.SelectStockObject(BLACK_PEN);
+		dc.SelectStockObject(BLACK_BRUSH);
+
+		auto i = m_shapes.back().begin();
+		dc.MoveTo(Convert(*i));
+		while (++i != m_shapes.back().end())
+			dc.LineTo(Convert(*i));
+
+		dc.LineTo(LogToDev(m_current));
+
+		for (auto& p : m_shapes.back())
 		{
-			if (!m_adding || &shape != &m_shapes.back())
-			{
-				std::srand(0); // Reset colours.
-				DrawShape(shape, dc);
-			}
-			else
-			{
-				dc.SelectStockObject(BLACK_PEN);
-				dc.SelectStockObject(BLACK_BRUSH);
-
-				auto i = shape.begin();
-				dc.MoveTo(Convert(*i));
-				while (++i != shape.end())
-					dc.LineTo(Convert(*i));
-
-				dc.LineTo(LogToDev(m_current));
-
-				for (auto& p : shape)
-				{
-					CPoint dev = LogToDev(Convert(p));
-					CRect r(dev, dev);
-					r.InflateRect(2, 2, 3, 3);
-					dc.Rectangle(r);
-				}
-			}
+			CPoint dev = LogToDev(Convert(p));
+			CRect r(dev, dev);
+			r.InflateRect(2, 2, 3, 3);
+			dc.Rectangle(r);
 		}
+	}
 }
 
 bool CChildView::HitPoint(CPoint p, CPoint q) const
@@ -100,9 +95,8 @@ void CChildView::OnRButtonDown(UINT nFlags, CPoint point)
 		for (size_t j = 0; j < shape.size(); ++j)
 			if (HitPoint(point, Convert(shape[j])))
 			{
-				InvalidateShape(shape);
 				shape.erase(shape.begin() + j);
-				UpdateShape(shape);
+				UpdateShapes();
 				return;
 			}
 
@@ -112,8 +106,7 @@ void CChildView::OnRButtonDown(UINT nFlags, CPoint point)
 		int vert = shape.AddPoint(Convert(point), 10);
 		if (vert >= 0)
 		{
-			InvalidateShape(shape);
-			UpdateShape(shape);
+			UpdateShapes();
 			m_dragging = true, m_dragShape = (int)i, m_dragPoint = vert;
 			break;
 		}
@@ -133,8 +126,7 @@ void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
 		if (m_current == Convert(m_shapes.back().front()))
 		{
 			m_adding = false;
-			InvalidateShape(m_shapes.back());
-			UpdateShape(m_shapes.back());
+			UpdateShapes();
 			return;
 		}
 	}
@@ -186,8 +178,7 @@ void CChildView::OnMouseMove(UINT nFlags, CPoint point)
 		auto& shape = m_shapes[m_dragShape];
 		InvalidateShape(shape);
 		shape[m_dragPoint] = Convert(point);
-		UpdateShape(shape);
-		InvalidateShape(shape);
+		UpdateShapes();
 	}
 	else
 		for (auto& poly : m_shapes)
@@ -200,16 +191,35 @@ void CChildView::OnMouseMove(UINT nFlags, CPoint point)
 void CChildView::OnClear()
 {
 	m_shapes.clear();
-	Invalidate();
+
+	CRect r;
+	GetClientRect(r);
+
+	const int d = 100;
+	
+	r.right -= r.right % d;
+	r.bottom -= r.bottom % d;
+
+	m_rootShape.clear();
+	for (int x = 0; x < r.right; x += d)
+		m_rootShape.push_back(Jig::Vec2(x, 0));
+
+	for (int y = 0; y < r.bottom; y += d)
+		m_rootShape.push_back(Jig::Vec2(r.right, y));
+
+	for (int x = r.right; x > 0; x -= d)
+		m_rootShape.push_back(Jig::Vec2(x, r.bottom));
+
+	for (int y = r.bottom; y > 0; y -= d)
+		m_rootShape.push_back(Jig::Vec2(0, y));
+
+	UpdateShapes();
 }
 
 void CChildView::OnOptimise()
 {
 	m_optimise = !m_optimise;
-	for (auto& shape : m_shapes)
-		UpdateShape(shape);
-
-	Invalidate();
+	UpdateShapes();
 }
 
 void CChildView::OnUpdateOptimise(CCmdUI* p)
@@ -273,13 +283,6 @@ void CChildView::DrawShape(const Jig::Polygon& shape, CDC& dc) const
 	if (shape.empty())
 		return;
 
-	if (!shape.GetEdgeMesh().GetFaces().empty())
-	{
-		for (auto& face : shape.GetEdgeMesh().GetFaces())
-			DrawShape(face->GetPolygon(), dc);
-		return;
-	}
-
 	dc.SelectStockObject(NULL_PEN);
 	dc.BeginPath();
 
@@ -291,12 +294,10 @@ void CChildView::DrawShape(const Jig::Polygon& shape, CDC& dc) const
 	dc.EndPath();
 	dc.SelectStockObject(BLACK_PEN);
 
-	CBrush brush(RGB(std::rand() % 255, std::rand() % 255, std::rand() % 255));
+	dc.EndPath();
+	dc.SelectStockObject(BLACK_PEN);
+	dc.SelectStockObject(GRAY_BRUSH);
 
-	if (shape.IsSelfIntersecting())
-		dc.SelectStockObject(NULL_BRUSH);
-	else
-		dc.SelectObject(&brush);
 	dc.StrokeAndFillPath();
 
 	dc.SelectStockObject(BLACK_BRUSH);
@@ -309,7 +310,27 @@ void CChildView::DrawShape(const Jig::Polygon& shape, CDC& dc) const
 	}
 }
 
-void CChildView::UpdateShape(Jig::Polygon& shape)
+void CChildView::UpdateShapes()
 {
-	shape.Update(m_optimise);
+	m_mesh.Init(m_rootShape);
+
+	for (auto& shape : m_shapes)
+	{
+		shape.Update();
+		if (!shape.IsSelfIntersecting())
+			m_mesh.AddHole(shape);
+	}
+
+	if (m_optimise)
+		m_mesh.DissolveRedundantEdges();
+
+	Invalidate();
+}
+
+void CChildView::OnSize(UINT nType, int cx, int cy)
+{
+	CWnd::OnSize(nType, cx, cy);
+
+	if (cx && cy && m_shapes.empty())
+		OnClear();
 }

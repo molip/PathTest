@@ -24,9 +24,12 @@ protected:
 	void InvalidateShape(const Jig::Polygon& shape);
 	bool HitPoint(CPoint p, CPoint q) const;
 	void DrawShape(const Jig::Polygon& shape, CDC& dc) const;
-	void UpdateShape(Jig::Polygon& shape);
+	void UpdateShapes();
 
 	std::vector<Jig::Polygon> m_shapes;
+	Jig::Polygon m_rootShape;
+	Jig::EdgeMesh m_mesh;
+
 	bool m_adding, m_dragging;
 	CPoint m_current;
 	bool m_optimise;
@@ -43,5 +46,7 @@ protected:
 	afx_msg void OnClear();
 	afx_msg void OnOptimise();
 	afx_msg void OnUpdateOptimise(CCmdUI* p);
+public:
+	afx_msg void OnSize(UINT nType, int cx, int cy);
 };
 
