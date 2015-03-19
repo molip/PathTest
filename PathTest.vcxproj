@@ -36,15 +36,15 @@
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\lib\PropertySheets\Dev.props" />
-    <Import Project="..\lib\PropertySheets\SFML.props" />
-    <Import Project="..\lib\PropertySheets\SFML.Debug.props" />
+    <Import Project="lib\PropertySheets\Dev.props" />
+    <Import Project="lib\PropertySheets\SFML.Debug.props" />
+    <Import Project="lib\PropertySheets\SFML.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\lib\PropertySheets\Dev.props" />
-    <Import Project="..\lib\PropertySheets\SFML.props" />
-    <Import Project="..\lib\PropertySheets\SFML.Release.props" />
+    <Import Project="lib\PropertySheets\Dev.props" />
+    <Import Project="lib\PropertySheets\SFML.Release.props" />
+    <Import Project="lib\PropertySheets\SFML.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -132,7 +132,7 @@
     <Image Include="res\Toolbar.bmp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\lib\Jig\Jig.vcxproj">
+    <ProjectReference Include="lib\Jig\Jig.vcxproj">
       <Project>{6c7150c0-a88c-49ed-8b19-398e2764e4cb}</Project>
     </ProjectReference>
   </ItemGroup>
