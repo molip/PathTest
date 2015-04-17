@@ -45,9 +45,6 @@ void CChildView::OnPaint()
 {
 	CPaintDC dc(this); // device context for painting
 
-	CRect r;
-	GetClientRect(r);
-
 	for (auto& face : m_mesh.GetFaces())
 		DrawShape(face->GetPolygon(), dc);
 
