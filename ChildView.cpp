@@ -4,11 +4,13 @@
 #include "MainFrm.h"
 #include "MemoryDC.h"
 
+#include "Jig/PathFinder.h"
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
-CChildView::CChildView() : m_adding(false), m_current{}, m_dragging(false), m_dragShape(-1), m_dragPoint(-1), m_optimise(false)
+CChildView::CChildView() : m_adding(false), m_current{}, m_dragging(false), m_dragShape(-1), m_dragPoint(-1), m_optimise(false), m_start{}, m_end{}, m_status{}
 {
 }
 
@@ -25,6 +27,8 @@ BEGIN_MESSAGE_MAP(CChildView, CWnd)
 	ON_WM_MOUSEMOVE()
 	ON_COMMAND(ID_CLEAR, OnClear)
 	ON_COMMAND(ID_OPTIMISE, OnOptimise)
+	ON_COMMAND(ID_START, OnStart)
+	ON_COMMAND(ID_END, OnEnd)
 	ON_UPDATE_COMMAND_UI(ID_OPTIMISE, OnUpdateOptimise)
 	ON_WM_SIZE()
 	ON_WM_ERASEBKGND()
@@ -50,7 +54,27 @@ void CChildView::OnPaint()
 	dc.FillSolidRect(dc.GetRect(), 0xffffff);
 
 	for (auto& face : m_mesh.GetFaces())
-		DrawShape(face->GetPolygon(), dc);
+		DrawShape(face->GetPolygon(), dc, false);
+
+	CRect rStart(m_start, CSize(0, 0));
+	CRect rEnd(m_end, CSize(0, 0));
+
+	if (!m_path.empty())
+	{
+		CPen pen(PS_SOLID, 3, 0xff0000);
+		dc.SelectObject(&pen);
+		
+		dc.MoveTo(Convert(m_path.front()));
+		for (auto& p : m_path)
+			dc.LineTo(Convert(p));
+		
+		dc.SelectStockObject(BLACK_PEN);
+	}
+
+	rStart.InflateRect(3, 3);
+	rEnd.InflateRect(3, 3);
+	dc.FillSolidRect(rStart, 0x0000ff00);
+	dc.FillSolidRect(rEnd, 0x000000ff);
 
 	if (m_adding)
 	{
@@ -165,7 +189,7 @@ void CChildView::OnMouseMove(UINT nFlags, CPoint point)
 		point.y = point.y / 20 * 20;
 	}
 
-	bool inPoly = false;
+	m_status.inPoly = false;
 
 	if (m_adding)
 	{
@@ -183,10 +207,12 @@ void CChildView::OnMouseMove(UINT nFlags, CPoint point)
 	}
 	else
 		for (auto& poly : m_shapes)
-			if (inPoly = poly.Contains(Convert(point)))
+			if (m_status.inPoly = poly.Contains(Convert(point)))
 				break;
 
-	static_cast<CMainFrame*>(::AfxGetMainWnd())->SetStatus(point, inPoly);
+	m_status.mousePos = point;
+
+	UpdateStatus();
 }
 
 void CChildView::OnClear()
@@ -279,7 +305,7 @@ Jig::Vec2 CChildView::Convert(const CPoint& p) const
 	return Jig::Vec2(p.x, p.y);
 }
 
-void CChildView::DrawShape(const Jig::Polygon& shape, CDC& dc) const
+void CChildView::DrawShape(const Jig::Polygon& shape, CDC& dc, bool special) const
 {
 	if (shape.empty())
 		return;
@@ -294,10 +320,7 @@ void CChildView::DrawShape(const Jig::Polygon& shape, CDC& dc) const
 
 	dc.EndPath();
 	dc.SelectStockObject(BLACK_PEN);
-
-	dc.EndPath();
-	dc.SelectStockObject(BLACK_PEN);
-	dc.SelectStockObject(GRAY_BRUSH);
+	dc.SelectStockObject(special ? DKGRAY_BRUSH : GRAY_BRUSH);
 
 	dc.StrokeAndFillPath();
 
@@ -325,7 +348,21 @@ void CChildView::UpdateShapes()
 	if (m_optimise)
 		m_mesh.DissolveRedundantEdges();
 
+	UpdatePath();
 	Invalidate();
+}
+
+void CChildView::UpdatePath()
+{
+	m_path = Jig::PathFinder(m_mesh, Convert(m_start), Convert(m_end)).Find(&m_status.pathLength);
+	
+	Invalidate();
+	UpdateStatus();
+}
+
+void CChildView::UpdateStatus()
+{
+	static_cast<CMainFrame*>(::AfxGetMainWnd())->SetStatus(m_status);
 }
 
 void CChildView::OnSize(UINT nType, int cx, int cy)
@@ -340,3 +377,18 @@ BOOL CChildView::OnEraseBkgnd(CDC* pDC)
 {
 	return true;
 }
+
+void CChildView::OnStart()
+{
+	::GetCursorPos(&m_start);
+	ScreenToClient(&m_start);
+	UpdatePath();
+}
+
+void CChildView::OnEnd()
+{
+	::GetCursorPos(&m_end);
+	ScreenToClient(&m_end);
+	UpdatePath();
+}
+

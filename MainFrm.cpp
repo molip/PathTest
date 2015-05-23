@@ -84,12 +84,15 @@ BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 	return TRUE;
 }
 
-void CMainFrame::SetStatus(CPoint p, bool inPoly)
+void CMainFrame::SetStatus(const CChildView::Status& status)
 {
 	std::wostringstream ss;
-	ss << p.x << L", " << p.y;
-	if(inPoly)
-		ss << L" (in poly)";
+	ss << status.mousePos.x << L", " << status.mousePos.y;
+	if (status.inPoly)
+		ss << L" (in poly) ";
+
+	ss << L"Path length: " << status.pathLength;
+
 	m_wndStatusBar.SetPaneText(0, ss.str().c_str());
 }
 

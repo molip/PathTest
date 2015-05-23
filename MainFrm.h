@@ -10,6 +10,7 @@ class CMainFrame : public CFrameWnd
 	
 public:
 	CMainFrame();
+
 protected: 
 	DECLARE_DYNAMIC(CMainFrame)
 
@@ -18,7 +19,7 @@ public:
 
 // Operations
 public:
-	void SetStatus(CPoint p, bool inPoly);
+	void SetStatus(const CChildView::Status& status);
 
 
 // Overrides
