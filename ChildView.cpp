@@ -392,3 +392,29 @@ void CChildView::OnEnd()
 	UpdatePath();
 }
 
+void CChildView::OnTest()
+{
+	CWaitCursor wc;
+
+	ULONGLONG start = ::GetTickCount64();
+	
+	::srand((int)start);
+
+	int n = 0;
+	while (::GetTickCount64() < start + 1000)
+	{
+		const CRect r = GetRect();
+
+		CPoint startPoint(::rand() % (r.right), ::rand() % (r.bottom));
+		CPoint endPoint(::rand() % (r.right), ::rand() % (r.bottom));
+		
+		double length = 0;		
+		Jig::PathFinder(m_mesh, Convert(startPoint), Convert(endPoint)).Find(&length);
+
+		++n;
+	}
+
+	std::wostringstream oss;
+	oss << n << L" paths/s";
+	::AfxMessageBox(oss.str().c_str());
+}
