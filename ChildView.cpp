@@ -6,11 +6,13 @@
 
 #include "Jig/PathFinder.h"
 
+#include <sstream>
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
-CChildView::CChildView() : m_adding(false), m_current{}, m_dragging(false), m_dragShape(-1), m_dragPoint(-1), m_optimise(false), m_start{}, m_end{}, m_status{}
+CChildView::CChildView() : m_adding(false), m_current{}, m_dragShape(-1), m_dragPoint(-1), m_optimise(false), m_start{}, m_end{}, m_status{}
 {
 }
 
@@ -32,6 +34,7 @@ BEGIN_MESSAGE_MAP(CChildView, CWnd)
 	ON_UPDATE_COMMAND_UI(ID_OPTIMISE, OnUpdateOptimise)
 	ON_WM_SIZE()
 	ON_WM_ERASEBKGND()
+	ON_COMMAND(ID_TEST, &CChildView::OnTest)
 END_MESSAGE_MAP()
 
 BOOL CChildView::PreCreateWindow(CREATESTRUCT& cs) 
@@ -114,6 +117,20 @@ CPoint CChildView::Snap(CPoint point) const
 	return point;
 }
 
+CRect CChildView::GetRect() const
+{
+	CRect r;
+	GetClientRect(r);
+
+	const int d = 100;
+
+	r.right -= r.right % d;
+	r.bottom -= r.bottom % d;
+
+	return r;
+}
+
+
 void CChildView::OnRButtonDown(UINT nFlags, CPoint point)
 {
 	for (auto& shape : m_shapes)
@@ -132,7 +149,7 @@ void CChildView::OnRButtonDown(UINT nFlags, CPoint point)
 		if (vert >= 0)
 		{
 			UpdateShapes();
-			m_dragging = true, m_dragShape = (int)i, m_dragPoint = vert;
+			m_dragState = DragState::MovingShapePoint, m_dragShape = (int)i, m_dragPoint = vert;
 			break;
 		}
 	}
@@ -157,11 +174,23 @@ void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
 	}
 	else
 	{
+		if (HitPoint(point, m_start))
+		{
+			m_dragState = DragState::MovingStartPoint;
+			return;
+		}
+
+		if (HitPoint(point, m_end))
+		{
+			m_dragState = DragState::MovingEndPoint;
+			return;
+		}
+
 		for (size_t i = 0; i < m_shapes.size(); ++i)
 			for (size_t j = 0; j < m_shapes[i].size(); ++j)
 				if (HitPoint(point, Convert(m_shapes[i][j])))
 				{
-					m_dragging = true, m_dragShape = (int)i, m_dragPoint = (int)j;
+					m_dragState = DragState::MovingShapePoint, m_dragShape = (int)i, m_dragPoint = (int)j;
 					return;
 				}
 
@@ -173,12 +202,12 @@ void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
 
 void CChildView::OnLButtonUp(UINT nFlags, CPoint point)
 {
-	m_dragging = false;
+	m_dragState = DragState::None;
 }
 
 void CChildView::OnRButtonUp(UINT nFlags, CPoint point)
 {
-	m_dragging = false;
+	m_dragState = DragState::None;
 }
 
 void CChildView::OnMouseMove(UINT nFlags, CPoint point)
@@ -197,9 +226,18 @@ void CChildView::OnMouseMove(UINT nFlags, CPoint point)
 		m_current = Snap(point);
 		InvalidateCurrent();
 	}
-	else if (m_dragging)
+	else if (m_dragState == DragState::MovingStartPoint)
 	{
-
+		m_start = point;
+		UpdatePath();
+	}
+	else if (m_dragState == DragState::MovingEndPoint)
+	{
+		m_end = point;
+		UpdatePath();
+	}
+	else if (m_dragState == DragState::MovingShapePoint)
+	{
 		auto& shape = m_shapes[m_dragShape];
 		InvalidateShape(shape);
 		shape[m_dragPoint] = Convert(point);
@@ -219,25 +257,22 @@ void CChildView::OnClear()
 {
 	m_shapes.clear();
 
-	CRect r;
-	GetClientRect(r);
-
-	const int d = 100;
-	
-	r.right -= r.right % d;
-	r.bottom -= r.bottom % d;
+	const CRect r = GetRect();
+	const int dx = 100, dy = 100;
+	//const int dx = r.right, dy = r.bottom;
 
 	m_rootShape.clear();
-	for (int x = 0; x < r.right; x += d)
+
+	for (int x = 0; x < r.right; x += dx)
 		m_rootShape.push_back(Jig::Vec2(x, 0));
 
-	for (int y = 0; y < r.bottom; y += d)
+	for (int y = 0; y < r.bottom; y += dy)
 		m_rootShape.push_back(Jig::Vec2(r.right, y));
 
-	for (int x = r.right; x > 0; x -= d)
+	for (int x = r.right; x > 0; x -= dx)
 		m_rootShape.push_back(Jig::Vec2(x, r.bottom));
 
-	for (int y = r.bottom; y > 0; y -= d)
+	for (int y = r.bottom; y > 0; y -= dy)
 		m_rootShape.push_back(Jig::Vec2(0, y));
 
 	UpdateShapes();

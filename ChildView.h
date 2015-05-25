@@ -34,12 +34,16 @@ protected:
 	void UpdateShapes();
 	void UpdatePath();
 	void UpdateStatus();
+	CRect GetRect() const;
 
 	std::vector<Jig::Polygon> m_shapes;
 	Jig::Polygon m_rootShape;
 	Jig::EdgeMesh m_mesh;
 
-	bool m_adding, m_dragging;
+	enum class DragState { None, Adding, MovingShapePoint, MovingStartPoint, MovingEndPoint };
+	
+	DragState m_dragState;
+	bool m_adding;
 	CPoint m_current;
 	bool m_optimise;
 
