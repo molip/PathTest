@@ -2,6 +2,7 @@
 #include "PathTest.h"
 #include "ChildView.h"
 #include "MainFrm.h"
+#include "MemoryDC.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -26,6 +27,7 @@ BEGIN_MESSAGE_MAP(CChildView, CWnd)
 	ON_COMMAND(ID_OPTIMISE, OnOptimise)
 	ON_UPDATE_COMMAND_UI(ID_OPTIMISE, OnUpdateOptimise)
 	ON_WM_SIZE()
+	ON_WM_ERASEBKGND()
 END_MESSAGE_MAP()
 
 BOOL CChildView::PreCreateWindow(CREATESTRUCT& cs) 
@@ -43,7 +45,9 @@ BOOL CChildView::PreCreateWindow(CREATESTRUCT& cs)
 
 void CChildView::OnPaint() 
 {
-	CPaintDC dc(this); // device context for painting
+	MemoryDC dc(*this);
+
+	dc.FillSolidRect(dc.GetRect(), 0xffffff);
 
 	for (auto& face : m_mesh.GetFaces())
 		DrawShape(face->GetPolygon(), dc);
@@ -330,4 +334,9 @@ void CChildView::OnSize(UINT nType, int cx, int cy)
 
 	if (cx && cy && m_shapes.empty())
 		OnClear();
+}
+
+BOOL CChildView::OnEraseBkgnd(CDC* pDC)
+{
+	return true;
 }

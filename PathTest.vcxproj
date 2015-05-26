@@ -107,6 +107,7 @@
   <ItemGroup>
     <ClInclude Include="ChildView.h" />
     <ClInclude Include="MainFrm.h" />
+    <ClInclude Include="MemoryDC.h" />
     <ClInclude Include="PathTest.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="stdafx.h" />
@@ -115,6 +116,7 @@
   <ItemGroup>
     <ClCompile Include="ChildView.cpp" />
     <ClCompile Include="MainFrm.cpp" />
+    <ClCompile Include="MemoryDC.cpp" />
     <ClCompile Include="PathTest.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
