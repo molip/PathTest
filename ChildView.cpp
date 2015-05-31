@@ -4,9 +4,11 @@
 #include "MainFrm.h"
 #include "MemoryDC.h"
 
+#include "Jig/Debug.h"
 #include "Jig/Geometry.h"
 #include "Jig/GetVisiblePoints.h"
-#include "Jig/PathFinder.h"
+#include "Jig/Triangulator.h"
+//#include "Jig/PathFinder.h"
 
 #include <sstream>
 
@@ -14,7 +16,7 @@
 #define new DEBUG_NEW
 #endif
 
-CChildView::CChildView() : m_adding(false), m_current{}, m_dragShape(-1), m_dragPoint(-1), m_optimise(false), m_showVisible(false), m_start{}, m_end{}, m_status{}, m_visibleFrom{}
+CChildView::CChildView() : m_adding(false), m_current{}, m_dragShape(-1), m_dragPoint(-1), m_optimise(false), m_showVisible(false), m_triangulate(false), m_start{}, m_end{}, m_status{}, m_visibleFrom{}
 {
 }
 
@@ -39,6 +41,8 @@ BEGIN_MESSAGE_MAP(CChildView, CWnd)
 	ON_COMMAND(ID_TEST, &CChildView::OnTest)
 	ON_COMMAND(ID_SHOWVISIBLE, &CChildView::OnShowVisible)
 	ON_UPDATE_COMMAND_UI(ID_SHOWVISIBLE, &CChildView::OnUpdateShowVisible)
+	ON_COMMAND(ID_TRIANGULATE, &CChildView::OnTriangulate)
+	ON_UPDATE_COMMAND_UI(ID_TRIANGULATE, &CChildView::OnUpdateTriangulate)
 END_MESSAGE_MAP()
 
 BOOL CChildView::PreCreateWindow(CREATESTRUCT& cs) 
@@ -411,25 +415,41 @@ void CChildView::DrawShape(const Jig::Polygon& shape, CDC& dc, bool special) con
 
 void CChildView::UpdateShapes()
 {
-	m_mesh.Init(m_rootShape);
-
-	for (auto& shape : m_shapes)
+	if (m_triangulate)
 	{
-		shape.Update();
-		if (!shape.IsSelfIntersecting())
-			m_mesh.AddHole(shape);
-	}
+		Jig::Triangulator triangulator(m_rootShape);
 
+		for (auto& shape : m_shapes)
+		{
+			shape.Update();
+			if (!shape.IsSelfIntersecting())
+				triangulator.AddHole(shape);
+		}
+
+		m_mesh = triangulator.Go();
+	}
+	else
+	{
+		m_mesh.Init(m_rootShape);
+
+		for (auto& shape : m_shapes)
+		{
+			shape.Update();
+			if (!shape.IsSelfIntersecting())
+				m_mesh.AddHole(shape);
+		}
+	}
+	
 	if (m_optimise)
 		m_mesh.DissolveRedundantEdges();
 
-	UpdatePath();
+	//UpdatePath();
 	Invalidate();
 }
 
 void CChildView::UpdatePath()
 {
-	m_path = Jig::PathFinder(m_mesh, Convert(m_start), Convert(m_end)).Find(&m_status.pathLength);
+	//m_path = Jig::PathFinder(m_mesh, Convert(m_start), Convert(m_end)).Find(&m_status.pathLength);
 	
 	Invalidate();
 	UpdateStatus();
@@ -473,24 +493,28 @@ void CChildView::OnTest()
 
 	ULONGLONG start = ::GetTickCount64();
 	
-	::srand((int)start);
+	//::srand((int)start);
 
-	int n = 0;
-	while (::GetTickCount64() < start + 1000)
-	{
-		const CRect r = GetRect();
+	//int n = 0;
+	//while (::GetTickCount64() < start + 1000)
+	//{
+	//	const CRect r = GetRect();
 
-		CPoint startPoint(::rand() % (r.right), ::rand() % (r.bottom));
-		CPoint endPoint(::rand() % (r.right), ::rand() % (r.bottom));
-		
-		double length = 0;		
-		Jig::PathFinder(m_mesh, Convert(startPoint), Convert(endPoint)).Find(&length);
+	//	CPoint startPoint(::rand() % (r.right), ::rand() % (r.bottom));
+	//	CPoint endPoint(::rand() % (r.right), ::rand() % (r.bottom));
+	//	
+	//	double length = 0;		
+	//	//Jig::PathFinder(m_mesh, Convert(startPoint), Convert(endPoint)).Find(&length);
 
-		++n;
-	}
+	//	++n;
+	//}
+
+	for (int i = 0; i < 1000; ++i)
+		UpdateShapes();
 
 	std::wostringstream oss;
-	oss << n << L" paths/s";
+	//oss << n << L" paths/s";
+	oss << ::GetTickCount64() - start << L" ms";
 	::AfxMessageBox(oss.str().c_str());
 }
 
@@ -503,4 +527,16 @@ void CChildView::OnShowVisible()
 void CChildView::OnUpdateShowVisible(CCmdUI *pCmdUI)
 {
 	pCmdUI->SetCheck(m_showVisible);
+}
+
+
+void CChildView::OnTriangulate()
+{
+	m_triangulate = !m_triangulate;
+	UpdateShapes();
+}
+
+void CChildView::OnUpdateTriangulate(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_triangulate);
 }
