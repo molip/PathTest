@@ -29,6 +29,7 @@ protected:
 	bool Colinear(const CPoint& p, const CPoint& q, const CPoint& r) const;
 	void InvalidateCurrent();
 	void InvalidateShape(const Jig::Polygon& shape);
+	void InvalidateVisible();
 	bool HitPoint(CPoint p, CPoint q) const;
 	void DrawShape(const Jig::Polygon& shape, CDC& dc, bool special) const;
 	void UpdateShapes();
@@ -45,12 +46,13 @@ protected:
 	DragState m_dragState;
 	bool m_adding;
 	CPoint m_current;
-	bool m_optimise;
+	bool m_optimise, m_showVisible;
 
 	int m_dragShape, m_dragPoint;
 
 	CPoint m_start, m_end;
-	std::vector<Jig::Vec2> m_path;
+	std::vector<Jig::Vec2> m_path, m_visible;
+	CPoint m_visibleFrom;
 
 	Status m_status;
 
@@ -70,5 +72,7 @@ public:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnTest();
+	afx_msg void OnShowVisible();
+	afx_msg void OnUpdateShowVisible(CCmdUI *pCmdUI);
 };
 

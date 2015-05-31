@@ -4,6 +4,8 @@
 #include "MainFrm.h"
 #include "MemoryDC.h"
 
+#include "Jig/Geometry.h"
+#include "Jig/GetVisiblePoints.h"
 #include "Jig/PathFinder.h"
 
 #include <sstream>
@@ -12,7 +14,7 @@
 #define new DEBUG_NEW
 #endif
 
-CChildView::CChildView() : m_adding(false), m_current{}, m_dragShape(-1), m_dragPoint(-1), m_optimise(false), m_start{}, m_end{}, m_status{}
+CChildView::CChildView() : m_adding(false), m_current{}, m_dragShape(-1), m_dragPoint(-1), m_optimise(false), m_showVisible(false), m_start{}, m_end{}, m_status{}, m_visibleFrom{}
 {
 }
 
@@ -35,6 +37,8 @@ BEGIN_MESSAGE_MAP(CChildView, CWnd)
 	ON_WM_SIZE()
 	ON_WM_ERASEBKGND()
 	ON_COMMAND(ID_TEST, &CChildView::OnTest)
+	ON_COMMAND(ID_SHOWVISIBLE, &CChildView::OnShowVisible)
+	ON_UPDATE_COMMAND_UI(ID_SHOWVISIBLE, &CChildView::OnUpdateShowVisible)
 END_MESSAGE_MAP()
 
 BOOL CChildView::PreCreateWindow(CREATESTRUCT& cs) 
@@ -99,6 +103,18 @@ void CChildView::OnPaint()
 			dc.Rectangle(r);
 		}
 	}
+
+	if (m_showVisible)
+	{
+		CPen pen(PS_SOLID, 1, 0x00c0ff);
+		dc.SelectObject(&pen);
+		for (auto& p : m_visible)
+		{
+			dc.MoveTo(m_visibleFrom);
+			dc.LineTo(Convert(p));
+		}
+		dc.SelectStockObject(BLACK_PEN);
+	}
 }
 
 bool CChildView::HitPoint(CPoint p, CPoint q) const
@@ -130,9 +146,11 @@ CRect CChildView::GetRect() const
 	return r;
 }
 
-
 void CChildView::OnRButtonDown(UINT nFlags, CPoint point)
 {
+	if (m_showVisible)
+		return;
+
 	for (auto& shape : m_shapes)
 		for (size_t j = 0; j < shape.size(); ++j)
 			if (HitPoint(point, Convert(shape[j])))
@@ -157,6 +175,9 @@ void CChildView::OnRButtonDown(UINT nFlags, CPoint point)
 
 void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
 {
+	if (m_showVisible)
+		return;
+
 	if (nFlags & MK_CONTROL)
 	{
 		point.x = point.x / 20 * 20;
@@ -220,7 +241,15 @@ void CChildView::OnMouseMove(UINT nFlags, CPoint point)
 
 	m_status.inPoly = false;
 
-	if (m_adding)
+	if (m_showVisible)
+	{
+		InvalidateVisible();
+		m_visibleFrom = point;
+		m_visible = Jig::GetVisiblePoints(m_mesh, Convert(point));
+		InvalidateVisible();
+
+	}
+	else if (m_adding)
 	{
 		InvalidateCurrent();
 		m_current = Snap(point);
@@ -323,6 +352,17 @@ void CChildView::InvalidateShape(const Jig::Polygon& shape)
 	CRect r = Convert(shape.GetBBox());
 	r.InflateRect(10, 10);
 	InvalidateRect(r);
+}
+
+void CChildView::InvalidateVisible()
+{
+	if (m_visible.empty())
+		return;
+
+	Jig::Rect r = Jig::Geometry::GetBBox(m_visible);
+	r.GrowTo(Convert(m_visibleFrom));
+
+	InvalidateRect(Convert(r));
 }
 
 CRect CChildView::Convert(const Jig::Rect& r) const
@@ -452,4 +492,15 @@ void CChildView::OnTest()
 	std::wostringstream oss;
 	oss << n << L" paths/s";
 	::AfxMessageBox(oss.str().c_str());
+}
+
+void CChildView::OnShowVisible()
+{
+	m_showVisible = !m_showVisible;
+	Invalidate();
+}
+
+void CChildView::OnUpdateShowVisible(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_showVisible);
 }
