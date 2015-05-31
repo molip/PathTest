@@ -46,7 +46,7 @@ protected:
 	DragState m_dragState;
 	bool m_adding;
 	CPoint m_current;
-	bool m_optimise, m_showVisible, m_triangulate;
+	bool m_optimise, m_showVisible;
 
 	int m_dragShape, m_dragPoint;
 
@@ -74,7 +74,5 @@ public:
 	afx_msg void OnTest();
 	afx_msg void OnShowVisible();
 	afx_msg void OnUpdateShowVisible(CCmdUI *pCmdUI);
-	afx_msg void OnTriangulate();
-	afx_msg void OnUpdateTriangulate(CCmdUI *pCmdUI);
 };
 

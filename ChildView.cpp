@@ -16,7 +16,7 @@
 #define new DEBUG_NEW
 #endif
 
-CChildView::CChildView() : m_adding(false), m_current{}, m_dragShape(-1), m_dragPoint(-1), m_optimise(false), m_showVisible(false), m_triangulate(false), m_start{}, m_end{}, m_status{}, m_visibleFrom{}
+CChildView::CChildView() : m_adding(false), m_current{}, m_dragShape(-1), m_dragPoint(-1), m_optimise(false), m_showVisible(false), m_start{}, m_end{}, m_status{}, m_visibleFrom{}
 {
 }
 
@@ -41,8 +41,6 @@ BEGIN_MESSAGE_MAP(CChildView, CWnd)
 	ON_COMMAND(ID_TEST, &CChildView::OnTest)
 	ON_COMMAND(ID_SHOWVISIBLE, &CChildView::OnShowVisible)
 	ON_UPDATE_COMMAND_UI(ID_SHOWVISIBLE, &CChildView::OnUpdateShowVisible)
-	ON_COMMAND(ID_TRIANGULATE, &CChildView::OnTriangulate)
-	ON_UPDATE_COMMAND_UI(ID_TRIANGULATE, &CChildView::OnUpdateTriangulate)
 END_MESSAGE_MAP()
 
 BOOL CChildView::PreCreateWindow(CREATESTRUCT& cs) 
@@ -415,31 +413,17 @@ void CChildView::DrawShape(const Jig::Polygon& shape, CDC& dc, bool special) con
 
 void CChildView::UpdateShapes()
 {
-	if (m_triangulate)
+	Jig::Triangulator triangulator(m_rootShape);
+
+	for (auto& shape : m_shapes)
 	{
-		Jig::Triangulator triangulator(m_rootShape);
-
-		for (auto& shape : m_shapes)
-		{
-			shape.Update();
-			if (!shape.IsSelfIntersecting())
-				triangulator.AddHole(shape);
-		}
-
-		m_mesh = triangulator.Go();
+		shape.Update();
+		if (!shape.IsSelfIntersecting())
+			triangulator.AddHole(shape);
 	}
-	else
-	{
-		m_mesh.Init(m_rootShape);
 
-		for (auto& shape : m_shapes)
-		{
-			shape.Update();
-			if (!shape.IsSelfIntersecting())
-				m_mesh.AddHole(shape);
-		}
-	}
-	
+	m_mesh = triangulator.Go();
+
 	if (m_optimise)
 		m_mesh.DissolveRedundantEdges();
 
@@ -527,16 +511,4 @@ void CChildView::OnShowVisible()
 void CChildView::OnUpdateShowVisible(CCmdUI *pCmdUI)
 {
 	pCmdUI->SetCheck(m_showVisible);
-}
-
-
-void CChildView::OnTriangulate()
-{
-	m_triangulate = !m_triangulate;
-	UpdateShapes();
-}
-
-void CChildView::OnUpdateTriangulate(CCmdUI *pCmdUI)
-{
-	pCmdUI->SetCheck(m_triangulate);
 }
