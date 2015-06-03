@@ -69,22 +69,22 @@ BEGIN
     BEGIN
         MENUITEM "E&xit",                       ID_APP_EXIT
     END
-    POPUP "&Edit"
-    BEGIN
-        MENUITEM "&Undo\tCtrl+Z",               ID_EDIT_UNDO
-        MENUITEM SEPARATOR
-        MENUITEM "Cu&t\tCtrl+X",                ID_EDIT_CUT
-        MENUITEM "&Copy\tCtrl+C",               ID_EDIT_COPY
-        MENUITEM "&Paste\tCtrl+V",              ID_EDIT_PASTE
-    END
     POPUP "&View"
     BEGIN
         MENUITEM "&Toolbar",                    ID_VIEW_TOOLBAR
         MENUITEM "&Status Bar",                 ID_VIEW_STATUS_BAR
     END
-    POPUP "&Help"
+    POPUP "&Actions"
     BEGIN
-        MENUITEM "&About PathTest...",          ID_APP_ABOUT
+        MENUITEM "&Clear",                      ID_CLEAR
+        MENUITEM "Clear and Add Squares",       ID_CLEARSQUARES
+        MENUITEM SEPARATOR
+        MENUITEM "&Test",                       ID_TEST
+    END
+    POPUP "&Options"
+    BEGIN
+        MENUITEM "&Show Visible",               ID_SHOWVISIBLE
+        MENUITEM "&Optimise Mesh",              ID_OPTIMISE
     END
 END
 

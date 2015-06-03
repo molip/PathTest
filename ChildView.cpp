@@ -8,7 +8,7 @@
 #include "Jig/Geometry.h"
 #include "Jig/GetVisiblePoints.h"
 #include "Jig/Triangulator.h"
-//#include "Jig/PathFinder.h"
+#include "Jig/PathFinder.h"
 
 #include <sstream>
 
@@ -32,6 +32,7 @@ BEGIN_MESSAGE_MAP(CChildView, CWnd)
 	ON_WM_RBUTTONUP()
 	ON_WM_MOUSEMOVE()
 	ON_COMMAND(ID_CLEAR, OnClear)
+	ON_COMMAND(ID_CLEARSQUARES, OnClearSquares)
 	ON_COMMAND(ID_OPTIMISE, OnOptimise)
 	ON_COMMAND(ID_START, OnStart)
 	ON_COMMAND(ID_END, OnEnd)
@@ -113,7 +114,7 @@ void CChildView::OnPaint()
 		for (auto& p : m_visible)
 		{
 			dc.MoveTo(m_visibleFrom);
-			dc.LineTo(Convert(p));
+			dc.LineTo(Convert(*p));
 		}
 		dc.SelectStockObject(BLACK_PEN);
 	}
@@ -245,11 +246,24 @@ void CChildView::OnMouseMove(UINT nFlags, CPoint point)
 
 	if (m_showVisible)
 	{
+#if 1		
 		InvalidateVisible();
 		m_visibleFrom = point;
 		m_visible = Jig::GetVisiblePoints(m_mesh, Convert(point));
 		InvalidateVisible();
+#else
+		m_visible.clear();
 
+		for (auto& vert : m_mesh.GetVerts())
+		{
+			if (HitPoint(Convert(vert), point))
+			{
+				m_visibleFrom = Convert(vert);
+				m_visible = vert.visible;
+				InvalidateVisible();
+			}
+		}
+#endif
 	}
 	else if (m_adding)
 	{
@@ -309,6 +323,27 @@ void CChildView::OnClear()
 	UpdateShapes();
 }
 
+void CChildView::OnClearSquares()
+{
+	OnClear();
+
+	const CRect r = GetRect();
+
+	int s = 50;
+	for (int x = s/2; x < r.right - s; x += s)
+		for (int y = s / 2; y < r.bottom - s; y += s)
+		{
+			Jig::Polygon poly;
+			poly.push_back(Jig::Vec2(x, y));
+			poly.push_back(Jig::Vec2(x + s/2, y));
+			poly.push_back(Jig::Vec2(x + s/2, y + s/2));
+			poly.push_back(Jig::Vec2(x, y + s/2));
+			m_shapes.push_back(poly);
+		}
+
+	UpdateShapes();
+}
+
 void CChildView::OnOptimise()
 {
 	m_optimise = !m_optimise;
@@ -323,13 +358,11 @@ void CChildView::OnUpdateOptimise(CCmdUI* p)
 CPoint CChildView::LogToDev(const CPoint& p) const
 {
 	return p;
-	//return CPoint(SquareSize * p.x, SquareSize * p.y);
 }
 
 CPoint CChildView::DevToLog(const CPoint& p) const
 {
 	return p;
-	//return CPoint(int(0.5 + p.x / (double)SquareSize), int(0.5 + p.y / (double)SquareSize));
 }
 
 bool CChildView::Colinear(const CPoint& p, const CPoint& q, const CPoint& r) const
@@ -361,7 +394,10 @@ void CChildView::InvalidateVisible()
 	if (m_visible.empty())
 		return;
 
-	Jig::Rect r = Jig::Geometry::GetBBox(m_visible);
+	Jig::Rect r(*m_visible.front());
+	for (auto* p : m_visible)
+		r.GrowTo(*p);
+
 	r.GrowTo(Convert(m_visibleFrom));
 
 	InvalidateRect(Convert(r));
@@ -427,13 +463,15 @@ void CChildView::UpdateShapes()
 	if (m_optimise)
 		m_mesh.DissolveRedundantEdges();
 
-	//UpdatePath();
+	m_mesh.UpdateVisible();
+
+	UpdatePath();
 	Invalidate();
 }
 
 void CChildView::UpdatePath()
 {
-	//m_path = Jig::PathFinder(m_mesh, Convert(m_start), Convert(m_end)).Find(&m_status.pathLength);
+	m_path = Jig::PathFinder(m_mesh, Convert(m_start), Convert(m_end)).Find(&m_status.pathLength);
 	
 	Invalidate();
 	UpdateStatus();
@@ -476,29 +514,33 @@ void CChildView::OnTest()
 	CWaitCursor wc;
 
 	ULONGLONG start = ::GetTickCount64();
-	
-	//::srand((int)start);
 
-	//int n = 0;
-	//while (::GetTickCount64() < start + 1000)
-	//{
-	//	const CRect r = GetRect();
+	std::wostringstream oss;
 
-	//	CPoint startPoint(::rand() % (r.right), ::rand() % (r.bottom));
-	//	CPoint endPoint(::rand() % (r.right), ::rand() % (r.bottom));
-	//	
-	//	double length = 0;		
-	//	//Jig::PathFinder(m_mesh, Convert(startPoint), Convert(endPoint)).Find(&length);
+#if 1
+	::srand((int)start);
+	int n = 0;
 
-	//	++n;
-	//}
+	while (::GetTickCount64() < start + 1000)
+	{
+		const CRect r = GetRect();
 
+		CPoint startPoint(::rand() % (r.right), ::rand() % (r.bottom));
+		CPoint endPoint(::rand() % (r.right), ::rand() % (r.bottom));
+
+		Jig::PathFinder(m_mesh, Convert(startPoint), Convert(endPoint)).Find();
+
+		++n;
+	}
+	oss << n << L" paths/s\n";
+
+#else 
 	for (int i = 0; i < 1000; ++i)
 		UpdateShapes();
 
-	std::wostringstream oss;
-	//oss << n << L" paths/s";
 	oss << ::GetTickCount64() - start << L" ms";
+#endif
+
 	::AfxMessageBox(oss.str().c_str());
 }
 

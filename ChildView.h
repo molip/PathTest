@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Jig/EdgeMesh.h"
 #include "Jig/Polygon.h"
 
 class CChildView : public CWnd
@@ -51,7 +52,9 @@ protected:
 	int m_dragShape, m_dragPoint;
 
 	CPoint m_start, m_end;
-	std::vector<Jig::Vec2> m_path, m_visible;
+	std::vector<Jig::Vec2> m_path;
+
+	std::vector<Jig::EdgeMesh::VertPtr> m_visible;
 	CPoint m_visibleFrom;
 
 	Status m_status;
@@ -64,6 +67,7 @@ protected:
 	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg void OnClear();
+	afx_msg void OnClearSquares();
 	afx_msg void OnOptimise();
 	afx_msg void OnStart();
 	afx_msg void OnEnd();
