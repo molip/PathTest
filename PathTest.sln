@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+# Visual Studio 14
+VisualStudioVersion = 14.0.22823.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PathTest", "PathTest.vcxproj", "{A1E604E6-D889-4418-B096-F3B96CFDB868}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Jig", "lib\Jig\Jig.vcxproj", "{6C7150C0-A88C-49ED-8B19-398E2764E4CB}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Jig", "libraries\lib\Jig\Jig.vcxproj", "{6C7150C0-A88C-49ED-8B19-398E2764E4CB}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libKernel", "libraries\libKernel\libKernel.vcxproj", "{A75566A2-3ED4-428B-B903-CB57DEFBC4BC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{6C7150C0-A88C-49ED-8B19-398E2764E4CB}.Debug|x64.Build.0 = Debug|x64
 		{6C7150C0-A88C-49ED-8B19-398E2764E4CB}.Release|x64.ActiveCfg = Release|x64
 		{6C7150C0-A88C-49ED-8B19-398E2764E4CB}.Release|x64.Build.0 = Release|x64
+		{A75566A2-3ED4-428B-B903-CB57DEFBC4BC}.Debug|x64.ActiveCfg = Debug|x64
+		{A75566A2-3ED4-428B-B903-CB57DEFBC4BC}.Debug|x64.Build.0 = Debug|x64
+		{A75566A2-3ED4-428B-B903-CB57DEFBC4BC}.Release|x64.ActiveCfg = Release|x64
+		{A75566A2-3ED4-428B-B903-CB57DEFBC4BC}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

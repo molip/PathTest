@@ -1,3 +1,6 @@
-[submodule "lib"]
-	path = lib
-	url = https://molip@github.com/molip/lib.git
+[submodule "libraries/lib"]
+	path = libraries/lib
+    url = https://github.com/molip/lib
+[submodule "libraries/libKernel"]
+	path = libraries/libKernel
+	url = https://github.com/molip/libKernel
