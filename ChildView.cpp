@@ -4,11 +4,12 @@
 #include "MainFrm.h"
 #include "MemoryDC.h"
 
-#include "Jig/Debug.h"
 #include "Jig/Geometry.h"
 #include "Jig/GetVisiblePoints.h"
 #include "Jig/Triangulator.h"
 #include "Jig/PathFinder.h"
+
+#include "libKernel/Debug.h"
 
 #include <sstream>
 
