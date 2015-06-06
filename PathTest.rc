@@ -68,6 +68,8 @@ BEGIN
     POPUP "&File"
     BEGIN
         MENUITEM "E&xit",                       ID_APP_EXIT
+        MENUITEM "Open",                        ID_FILE_OPEN
+        MENUITEM "Save",                        ID_FILE_SAVE
     END
     POPUP "&View"
     BEGIN

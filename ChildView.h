@@ -16,6 +16,9 @@ public:
 		double pathLength;
 	};
 
+	void Save(Kernel::Serial::SaveNode& node) const;
+	void Load(const Kernel::Serial::LoadNode& node);
+
 protected:
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 
@@ -78,5 +81,7 @@ public:
 	afx_msg void OnTest();
 	afx_msg void OnShowVisible();
 	afx_msg void OnUpdateShowVisible(CCmdUI *pCmdUI);
+	afx_msg void OnFileSave();
+	afx_msg void OnFileOpen();
 };
 

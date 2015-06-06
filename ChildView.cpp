@@ -10,6 +10,7 @@
 #include "Jig/PathFinder.h"
 
 #include "libKernel/Debug.h"
+#include "libKernel/Serial.h"
 
 #include <sstream>
 
@@ -43,6 +44,8 @@ BEGIN_MESSAGE_MAP(CChildView, CWnd)
 	ON_COMMAND(ID_TEST, &CChildView::OnTest)
 	ON_COMMAND(ID_SHOWVISIBLE, &CChildView::OnShowVisible)
 	ON_UPDATE_COMMAND_UI(ID_SHOWVISIBLE, &CChildView::OnUpdateShowVisible)
+	ON_COMMAND(ID_FILE_SAVE, &CChildView::OnFileSave)
+	ON_COMMAND(ID_FILE_OPEN, &CChildView::OnFileOpen)
 END_MESSAGE_MAP()
 
 BOOL CChildView::PreCreateWindow(CREATESTRUCT& cs) 
@@ -483,6 +486,34 @@ void CChildView::UpdateStatus()
 	static_cast<CMainFrame*>(::AfxGetMainWnd())->SetStatus(m_status);
 }
 
+void CChildView::Save(Kernel::Serial::SaveNode& node) const
+{
+	Jig::Vec2 start = Convert(m_start), end = Convert(m_end);
+
+	node.SaveType("start", start);
+	node.SaveType("end", end);
+	node.SaveClass("root", m_rootShape);
+	node.SaveCntr("shapes", m_shapes, Kernel::Serial::ClassSaver());
+}
+
+void CChildView::Load(const Kernel::Serial::LoadNode& node)
+{
+	m_rootShape.clear();
+	m_shapes.clear();
+
+	Jig::Vec2 start, end;
+
+	node.LoadType("start", start);
+	node.LoadType("end", end);
+	node.LoadClass("root", m_rootShape);
+	node.LoadCntr("shapes", m_shapes, Kernel::Serial::ClassLoader());
+
+	m_start = Convert(start);
+	m_end = Convert(end);
+
+	UpdateShapes();
+}
+
 void CChildView::OnSize(UINT nType, int cx, int cy)
 {
 	CWnd::OnSize(nType, cx, cy);
@@ -554,4 +585,14 @@ void CChildView::OnShowVisible()
 void CChildView::OnUpdateShowVisible(CCmdUI *pCmdUI)
 {
 	pCmdUI->SetCheck(m_showVisible);
+}
+
+void CChildView::OnFileSave()
+{
+	Kernel::Serial::SaveClass("test.pathtest", *this);
+}
+
+void CChildView::OnFileOpen()
+{
+	Kernel::Serial::LoadClass("test.pathtest", *this);
 }
