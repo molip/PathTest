@@ -250,12 +250,7 @@ void CChildView::OnMouseMove(UINT nFlags, CPoint point)
 
 	if (m_showVisible)
 	{
-#if 1		
 		InvalidateVisible();
-		m_visibleFrom = point;
-		m_visible = Jig::GetVisiblePoints(m_mesh, Convert(point));
-		InvalidateVisible();
-#else
 		m_visible.clear();
 
 		for (auto& vert : m_mesh.GetVerts())
@@ -264,10 +259,16 @@ void CChildView::OnMouseMove(UINT nFlags, CPoint point)
 			{
 				m_visibleFrom = Convert(vert);
 				m_visible = vert.visible;
-				InvalidateVisible();
 			}
 		}
-#endif
+
+		if (m_visible.empty())
+		{
+			m_visibleFrom = point;
+			m_visible = Jig::GetVisiblePoints(m_mesh, Convert(point));
+		}
+		
+		InvalidateVisible();
 	}
 	else if (m_adding)
 	{
