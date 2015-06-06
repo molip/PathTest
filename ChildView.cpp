@@ -7,7 +7,6 @@
 #include "Jig/Geometry.h"
 #include "Jig/GetVisiblePoints.h"
 #include "Jig/Triangulator.h"
-#include "Jig/PathFinder.h"
 
 #include "libKernel/Debug.h"
 #include "libKernel/Serial.h"
@@ -46,6 +45,11 @@ BEGIN_MESSAGE_MAP(CChildView, CWnd)
 	ON_UPDATE_COMMAND_UI(ID_SHOWVISIBLE, &CChildView::OnUpdateShowVisible)
 	ON_COMMAND(ID_FILE_SAVE, &CChildView::OnFileSave)
 	ON_COMMAND(ID_FILE_OPEN, &CChildView::OnFileOpen)
+	ON_COMMAND(ID_FIND_RESET, &CChildView::OnFindReset)
+	ON_COMMAND(ID_FIND_GO, &CChildView::OnFindGo)
+	ON_UPDATE_COMMAND_UI(ID_FIND_GO, &CChildView::OnUpdateFind)
+	ON_COMMAND(ID_FIND_STEP, &CChildView::OnFindStep)
+	ON_UPDATE_COMMAND_UI(ID_FIND_STEP, &CChildView::OnUpdateFind)
 END_MESSAGE_MAP()
 
 BOOL CChildView::PreCreateWindow(CREATESTRUCT& cs) 
@@ -119,6 +123,27 @@ void CChildView::OnPaint()
 		{
 			dc.MoveTo(m_visibleFrom);
 			dc.LineTo(Convert(*p));
+		}
+		dc.SelectStockObject(BLACK_PEN);
+	}
+
+	if (m_pathFinder)
+	{
+		CPen penDone(PS_SOLID, 1, 0x0000ff);
+		dc.SelectObject(&penDone);
+		for (auto& d : m_pathFinder->GetDone())
+		{
+			Jig::Rect r(*d.first);
+			r.Inflate(3, 3);
+			dc.Ellipse(Convert(r));
+		}
+		CPen penQueue(PS_SOLID, 1, 0x00ff00);
+		dc.SelectObject(&penQueue);
+		for (auto& q : m_pathFinder->GetQueue())
+		{
+			Jig::Rect r(*q.second);
+			r.Inflate(3, 3);
+			dc.Ellipse(Convert(r));
 		}
 		dc.SelectStockObject(BLACK_PEN);
 	}
@@ -476,10 +501,20 @@ void CChildView::UpdateShapes()
 
 void CChildView::UpdatePath()
 {
-	m_path = Jig::PathFinder(m_mesh, Convert(m_start), Convert(m_end)).Find(&m_status.pathLength);
-	
-	Invalidate();
-	UpdateStatus();
+	OnFindReset();
+	OnFindGo();
+}
+
+void CChildView::OnPathChanged()
+{
+	if (m_pathFinder)
+	{
+		m_path = m_pathFinder->GetPath();
+		m_status.pathLength = m_pathFinder->GetLength();
+
+		Invalidate();
+		UpdateStatus();
+	}
 }
 
 void CChildView::UpdateStatus()
@@ -561,7 +596,7 @@ void CChildView::OnTest()
 		CPoint startPoint(::rand() % (r.right), ::rand() % (r.bottom));
 		CPoint endPoint(::rand() % (r.right), ::rand() % (r.bottom));
 
-		Jig::PathFinder(m_mesh, Convert(startPoint), Convert(endPoint)).Find();
+		Jig::PathFinder(m_mesh, Convert(startPoint), Convert(endPoint)).Go();
 
 		++n;
 	}
@@ -596,4 +631,35 @@ void CChildView::OnFileSave()
 void CChildView::OnFileOpen()
 {
 	Kernel::Serial::LoadClass("test.pathtest", *this);
+}
+
+void CChildView::OnFindReset()
+{
+	m_pathFinder = std::make_unique<Jig::PathFinder>(m_mesh, Convert(m_start), Convert(m_end));
+	OnPathChanged();
+}
+
+void CChildView::OnFindGo()
+{
+	if (m_pathFinder)
+		m_pathFinder->Go();
+
+	OnPathChanged();
+	m_pathFinder = nullptr;
+}
+
+void CChildView::OnFindStep()
+{
+	if (m_pathFinder)
+		m_pathFinder->Step();
+
+	OnPathChanged();
+
+	if (m_pathFinder->IsFinished())
+		m_pathFinder = nullptr;
+}
+
+void CChildView::OnUpdateFind(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_pathFinder != nullptr);
 }

@@ -2,6 +2,7 @@
 
 #include "Jig/EdgeMesh.h"
 #include "Jig/Polygon.h"
+#include "Jig/PathFinder.h"
 
 class CChildView : public CWnd
 {
@@ -40,10 +41,12 @@ protected:
 	void UpdatePath();
 	void UpdateStatus();
 	CRect GetRect() const;
+	void OnPathChanged();
 
 	std::vector<Jig::Polygon> m_shapes;
 	Jig::Polygon m_rootShape;
 	Jig::EdgeMesh m_mesh;
+	std::unique_ptr<Jig::PathFinder> m_pathFinder;
 
 	enum class DragState { None, Adding, MovingShapePoint, MovingStartPoint, MovingEndPoint };
 	
@@ -83,5 +86,10 @@ public:
 	afx_msg void OnUpdateShowVisible(CCmdUI *pCmdUI);
 	afx_msg void OnFileSave();
 	afx_msg void OnFileOpen();
+	afx_msg void OnFindReset();
+	afx_msg void OnFindGo();
+	afx_msg void OnFindStep();
+	afx_msg void OnUpdateFind(CCmdUI *pCmdUI);
+
 };
 
