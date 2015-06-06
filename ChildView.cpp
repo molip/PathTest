@@ -141,7 +141,7 @@ void CChildView::OnPaint()
 		dc.SelectObject(&penQueue);
 		for (auto& q : m_pathFinder->GetQueue())
 		{
-			Jig::Rect r(*q.second);
+			Jig::Rect r(*q.vert);
 			r.Inflate(3, 3);
 			dc.Ellipse(Convert(r));
 		}
