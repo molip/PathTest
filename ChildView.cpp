@@ -493,7 +493,7 @@ void CChildView::UpdateShapes()
 	if (m_optimise)
 		m_mesh.DissolveRedundantEdges();
 
-	m_mesh.UpdateVisible();
+	m_mesh.Update();
 
 	UpdatePath();
 	Invalidate();
@@ -581,27 +581,35 @@ void CChildView::OnTest()
 {
 	CWaitCursor wc;
 
-	ULONGLONG start = ::GetTickCount64();
-
 	std::wostringstream oss;
 
 #if 1
-	::srand((int)start);
+	//::srand((int)::GetTickCount64());
+	::srand(0);
 	int n = 0;
 
+	std::vector<Jig::Vec2> vec;
+	const CRect r = GetRect();
+
+	for (int i = 0; i < 10000; ++i)
+		vec.emplace_back(::rand() % (r.right), ::rand() % (r.bottom));
+
+	ULONGLONG start = ::GetTickCount64();
 	while (::GetTickCount64() < start + 1000)
+#if 1
 	{
-		const CRect r = GetRect();
+		const Jig::EdgeMesh::Face* startFace = m_mesh.HitTest(vec[n % vec.size()]);
+		++n;
+	}
 
-		CPoint startPoint(::rand() % (r.right), ::rand() % (r.bottom));
-		CPoint endPoint(::rand() % (r.right), ::rand() % (r.bottom));
-
-		Jig::PathFinder(m_mesh, Convert(startPoint), Convert(endPoint)).Go();
-
+	oss << n << L" hittests/s\n";
+#else 
+	{
+		Jig::PathFinder(m_mesh, vec[n % vec.size()], vec[(n + 1) % vec.size()]).Go();
 		++n;
 	}
 	oss << n << L" paths/s\n";
-
+#endif
 #else 
 	for (int i = 0; i < 1000; ++i)
 		UpdateShapes();
