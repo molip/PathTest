@@ -2,10 +2,11 @@
 #include "PathTest.h"
 #include "ChildView.h"
 #include "MainFrm.h"
-#include "MemoryDC.h"
 
+#include "Jig/Convert.h"
 #include "Jig/Geometry.h"
 #include "Jig/GetVisiblePoints.h"
+#include "Jig/MemoryDC.h"
 #include "Jig/Triangulator.h"
 
 #include "libKernel/Debug.h"
@@ -16,6 +17,8 @@
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
+
+using Jig::Convert;
 
 CChildView::CChildView() : m_adding(false), m_current{}, m_dragShape(-1), m_dragPoint(-1), m_optimise(false), m_showVisible(false), m_start{}, m_end{}, m_status{}, m_visibleFrom{}
 {
@@ -67,7 +70,7 @@ BOOL CChildView::PreCreateWindow(CREATESTRUCT& cs)
 
 void CChildView::OnPaint() 
 {
-	MemoryDC dc(*this);
+	Jig::MemoryDC dc(*this);
 
 	dc.FillSolidRect(dc.GetRect(), 0xffffff);
 
@@ -431,21 +434,6 @@ void CChildView::InvalidateVisible()
 	r.GrowTo(Convert(m_visibleFrom));
 
 	InvalidateRect(Convert(r));
-}
-
-CRect CChildView::Convert(const Jig::Rect& r) const
-{
-	return CRect((long)std::floor(r.m_p0.x), (long)std::floor(r.m_p0.y), (long)std::floor(r.m_p1.x), (long)std::floor(r.m_p1.y));
-}
-
-CPoint CChildView::Convert(const Jig::Vec2& p) const
-{
-	return CPoint((long)std::floor(p.x), (long)std::floor(p.y));
-}
-
-Jig::Vec2 CChildView::Convert(const CPoint& p) const
-{
-	return Jig::Vec2(p.x, p.y);
 }
 
 void CChildView::DrawShape(const Jig::Polygon& shape, CDC& dc, bool special) const
