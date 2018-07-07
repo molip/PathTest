@@ -283,10 +283,10 @@ void CChildView::OnMouseMove(UINT nFlags, CPoint point)
 
 		for (auto& vert : m_mesh.GetVerts())
 		{
-			if (HitPoint(Convert(vert), point))
+			if (HitPoint(Convert(*vert), point))
 			{
-				m_visibleFrom = Convert(vert);
-				m_visible = vert.visible;
+				m_visibleFrom = Convert(*vert);
+				m_visible = vert->visible;
 			}
 		}
 
@@ -428,7 +428,7 @@ void CChildView::InvalidateVisible()
 		return;
 
 	Jig::Rect r(*m_visible.front());
-	for (auto* p : m_visible)
+	for (auto& p : m_visible)
 		r.GrowTo(*p);
 
 	r.GrowTo(Convert(m_visibleFrom));

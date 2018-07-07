@@ -56,7 +56,7 @@ protected:
 	CPoint m_start, m_end;
 	std::vector<Jig::Vec2> m_path;
 
-	std::vector<Jig::EdgeMesh::VertPtr> m_visible;
+	Jig::EdgeMesh::Vert::VisibleVec m_visible;
 	CPoint m_visibleFrom;
 
 	Status m_status;
