@@ -4,6 +4,7 @@
 #include "MainFrm.h"
 
 #include "Jig/Convert.h"
+#include "Jig/EdgeMeshVisibility.h"
 #include "Jig/Geometry.h"
 #include "Jig/GetVisiblePoints.h"
 #include "Jig/MemoryDC.h"
@@ -286,7 +287,7 @@ void CChildView::OnMouseMove(UINT nFlags, CPoint point)
 			if (HitPoint(Convert(*vert), point))
 			{
 				m_visibleFrom = Convert(*vert);
-				m_visible = vert->visible;
+				m_visible = Jig::EdgeMeshVisibility::GetData(vert.get())->visible;
 			}
 		}
 
